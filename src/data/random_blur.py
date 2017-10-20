@@ -13,7 +13,7 @@ def random_kernel_size(image_width):
     return size
 
 
-def rotate_bound(image, angle, original_dims=None):
+def rotate_bound(image, angle, original_dims=None, border=cv2.BORDER_REPLICATE):
     # grab the dimensions of the image and then determine the
     # center
     (h, w) = image.shape[:2]
@@ -35,7 +35,7 @@ def rotate_bound(image, angle, original_dims=None):
         M[0, 2] += (nW / 2) - cX
         M[1, 2] += (nH / 2) - cY
         # perform rotation
-        return cv2.warpAffine(image, M, (nW, nH), borderMode=cv2.BORDER_REPLICATE)
+        return cv2.warpAffine(image, M, (nW, nH), borderMode=border)
     else:
         # translate image to top-left and then rotate back
         M[0, 2] -= (w - original_dims[0]) / 2
@@ -48,8 +48,8 @@ def motion_blur(img):
     height, width = img.shape[:2]
     size = random_kernel_size(width)
     
-    # random angle between 0 and 180
-    angle = random.uniform(0, 180)
+    # random angle between -180 and 180
+    angle = random.uniform(-180, 180)
     # rotate image by random angle
     img = rotate_bound(img, angle)
 
@@ -63,12 +63,28 @@ def motion_blur(img):
 
     
 def gaussian_blur(img):
-    # max gaussian kernel is 19x19
-    size = int(19 * random.uniform(0.3, 1.0))
+    image_width = img.shape[:2][1]
+    # max gaussian kernel is 19x19, which is 9.5% of the largest image width
+    max_size = np.ceil(0.095 * image_width)
+    size = int(max_size * random.uniform(0.3, 1.0))
     # nearest odd number
     size = size - 1 if size % 2 is 0 else size
     return cv2.GaussianBlur(img,(size, size), 0, 0)
     
+    
+def add_noise(img):
+    row,col,ch= img.shape
+    mean = 0
+    variance = random.uniform(20, 75)
+    sigma = variance**0.5
+    gauss = np.random.normal(mean, sigma, (row, col, ch))
+    gauss = gauss.reshape(row, col, ch)
+    return img + gauss
+    
+def random_rotate(img):
+    angle = random.uniform(-15,15)
+    return rotate_bound(img, angle, border=0)
+
 if __name__ == '__main__':
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
     input_img_dir = os.path.join(project_dir, "data", "raw", "pre-blur")
@@ -81,7 +97,10 @@ if __name__ == '__main__':
         path = os.path.join(input_img_dir, photo)
         img = cv2.imread(path)
         motion_blurred = motion_blur(img)
-        output_img = gaussian_blur(motion_blurred)
+        gaussian_blurred = gaussian_blur(motion_blurred)
+        output_img = add_noise(gaussian_blurred)
+        # not happy with the rotation results yet
+        # output_img = random_rotate(output_img)
 
         output_filepath = os.path.join(output_dir, "{}.jpg".format(count))
         cv2.imwrite(output_filepath, output_img)
