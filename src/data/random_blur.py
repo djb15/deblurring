@@ -43,7 +43,32 @@ def rotate_bound(image, angle, original_dims=None):
         return cv2.warpAffine(image, M, original_dims)
     
 
+def motion_blur(img):
+    # Randomise size of matrix for motion blur
+    height, width = img.shape[:2]
+    size = random_kernel_size(width)
+    
+    # random angle between 0 and 180
+    angle = random.uniform(0, 180)
+    # rotate image by random angle
+    img = rotate_bound(img, angle)
 
+    kernel_motion_blur = np.zeros((size, size))
+    kernel_motion_blur[int(size/2), int(size/2):] = np.ones(int((size+1)/2))
+    kernel_motion_blur = kernel_motion_blur / int((size+1)/2)
+    # perform motion blur
+    output_img = cv2.filter2D(img, -1, kernel_motion_blur, borderType=cv2.BORDER_REPLICATE)
+    # unrotate image, cropping to original dimensions
+    return rotate_bound(output_img, -angle, (width, height))
+
+    
+def gaussian_blur(img):
+    # max gaussian kernel is 19x19
+    size = int(19 * random.uniform(0.3, 1.0))
+    # nearest odd number
+    size = size - 1 if size % 2 is 0 else size
+    return cv2.GaussianBlur(img,(size, size), 0, 0)
+    
 if __name__ == '__main__':
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
     input_img_dir = os.path.join(project_dir, "data", "raw", "pre-blur")
@@ -55,23 +80,8 @@ if __name__ == '__main__':
         count += 1
         path = os.path.join(input_img_dir, photo)
         img = cv2.imread(path)
-
-        # Randomise size of matrix for motion blur
-        height, width = img.shape[:2]
-        size = random_kernel_size(width)
-        
-        # random angle between 0 and 180
-        angle = random.uniform(0, 180)
-        # rotate image by random angle
-        img = rotate_bound(img, angle)
-
-        kernel_motion_blur = np.zeros((size, size))
-        kernel_motion_blur[int(size/2), int(size/2):] = np.ones(int((size+1)/2))
-        kernel_motion_blur = kernel_motion_blur / int((size+1)/2)
-        # perform motion blur
-        output_img = cv2.filter2D(img, -1, kernel_motion_blur, borderType=cv2.BORDER_REPLICATE)
-        # unrotate image, cropping to original dimensions
-        output_img = rotate_bound(output_img, -angle, (width, height))
+        motion_blurred = motion_blur(img)
+        output_img = gaussian_blur(motion_blurred)
 
         output_filepath = os.path.join(output_dir, "{}.jpg".format(count))
         cv2.imwrite(output_filepath, output_img)
