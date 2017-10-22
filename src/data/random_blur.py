@@ -18,14 +18,14 @@ def rotate_bound(image, angle, original_dims=None, border=cv2.BORDER_REPLICATE):
     # center
     (h, w) = image.shape[:2]
     (cX, cY) = (w // 2, h // 2)
- 
+
     # grab the rotation matrix (applying the negative of the
     # angle to rotate clockwise), then grab the sine and cosine
     # (i.e., the rotation components of the matrix)
     M = cv2.getRotationMatrix2D((cX, cY), -angle, 1.0)
     cos = np.abs(M[0, 0])
     sin = np.abs(M[0, 1])
- 
+
     # if original_dims is set, crop to original size
     if not original_dims:
         # compute the new bounding dimensions of the image
@@ -41,13 +41,13 @@ def rotate_bound(image, angle, original_dims=None, border=cv2.BORDER_REPLICATE):
         M[0, 2] -= (w - original_dims[0]) / 2
         M[1, 2] -= (h - original_dims[1]) / 2
         return cv2.warpAffine(image, M, original_dims)
-    
+
 
 def motion_blur(img):
     # Randomise size of matrix for motion blur
     height, width = img.shape[:2]
     size = random_kernel_size(width)
-    
+
     # random angle between -180 and 180
     angle = random.uniform(-180, 180)
     # rotate image by random angle
@@ -61,7 +61,7 @@ def motion_blur(img):
     # unrotate image, cropping to original dimensions
     return rotate_bound(output_img, -angle, (width, height))
 
-    
+
 def gaussian_blur(img):
     image_width = img.shape[:2][1]
     # max gaussian kernel is 19x19, which is 9.5% of the largest image width
@@ -70,8 +70,8 @@ def gaussian_blur(img):
     # nearest odd number
     size = size - 1 if size % 2 is 0 else size
     return cv2.GaussianBlur(img,(size, size), 0, 0)
-    
-    
+
+
 def add_noise(img):
     row,col,ch= img.shape
     mean = 0
@@ -80,7 +80,7 @@ def add_noise(img):
     gauss = np.random.normal(mean, sigma, (row, col, ch))
     gauss = gauss.reshape(row, col, ch)
     return img + gauss
-    
+
 def random_rotate(img):
     angle = random.uniform(-15,15)
     return rotate_bound(img, angle, border=0)
@@ -102,5 +102,6 @@ if __name__ == '__main__':
         # not happy with the rotation results yet
         # output_img = random_rotate(output_img)
 
-        output_filepath = os.path.join(output_dir, "{}.jpg".format(count))
+        output_name = photo[:-4] + '-blurred-' + str(count)
+        output_filepath = os.path.join(output_dir, "{}.jpg".format(output_name))
         cv2.imwrite(output_filepath, output_img)
