@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 def build_network(input_layer):
     conv1 = tf.layers.conv2d(
@@ -11,7 +12,7 @@ def build_network(input_layer):
 
     conv2 = tf.layers.conv2d(
         inputs=conv1,
-        filters=320
+        filters=320,
         kernel=[1, 1],
         padding='same',
         activation=tf.nn.relu
@@ -19,7 +20,7 @@ def build_network(input_layer):
 
     conv3 = tf.layers.conv2d(
         inputs=conv2,
-        filters=320
+        filters=320,
         kernel=[1, 1],
         padding='same',
         activation=tf.nn.relu
@@ -27,7 +28,7 @@ def build_network(input_layer):
 
     conv4 = tf.layers.conv2d(
         inputs=conv3,
-        filters=320
+        filters=320,
         kernel=[1, 1],
         padding='same',
         activation=tf.nn.relu
@@ -35,7 +36,7 @@ def build_network(input_layer):
 
     conv5 = tf.layers.conv2d(
         inputs=conv4,
-        filters=128
+        filters=128,
         kernel=[1, 1],
         padding='same',
         activation=tf.nn.relu
@@ -43,7 +44,7 @@ def build_network(input_layer):
 
     conv6 = tf.layers.conv2d(
         inputs=conv5,
-        filters=128
+        filters=128,
         kernel=[3, 3],
         padding='same',
         activation=tf.nn.relu
@@ -51,7 +52,7 @@ def build_network(input_layer):
 
     conv7 = tf.layers.conv2d(
         inputs=conv6,
-        filters=512
+        filters=512,
         kernel=[1, 1],
         padding='same',
         activation=tf.nn.relu
@@ -59,7 +60,7 @@ def build_network(input_layer):
 
     conv8 = tf.layers.conv2d(
         inputs=conv7,
-        filters=128
+        filters=128,
         kernel=[5, 5],
         padding='same',
         activation=tf.nn.relu
@@ -67,7 +68,7 @@ def build_network(input_layer):
 
     conv9 = tf.layers.conv2d(
         inputs=conv8,
-        filters=128
+        filters=128,
         kernel=[5, 5],
         padding='same',
         activation=tf.nn.relu
@@ -75,7 +76,7 @@ def build_network(input_layer):
 
     conv10 = tf.layers.conv2d(
         inputs=conv9,
-        filters=128
+        filters=128,
         kernel=[3, 3],
         padding='same',
         activation=tf.nn.relu
@@ -83,7 +84,7 @@ def build_network(input_layer):
 
     conv11 = tf.layers.conv2d(
         inputs=conv10,
-        filters=128
+        filters=128,
         kernel=[5, 5],
         padding='same',
         activation=tf.nn.relu
@@ -91,7 +92,7 @@ def build_network(input_layer):
 
     conv12 = tf.layers.conv2d(
         inputs=conv11,
-        filters=128
+        filters=128,
         kernel=[5, 5],
         padding='same',
         activation=tf.nn.relu
@@ -99,7 +100,7 @@ def build_network(input_layer):
 
     conv13 = tf.layers.conv2d(
         inputs=conv12,
-        filters=256
+        filters=256,
         kernel=[1, 1],
         padding='same',
         activation=tf.nn.relu
@@ -107,7 +108,7 @@ def build_network(input_layer):
 
     conv14 = tf.layers.conv2d(
         inputs=conv13,
-        filters=64
+        filters=64,
         kernel=[7, 7],
         padding='same',
         activation=tf.nn.relu
@@ -115,7 +116,7 @@ def build_network(input_layer):
 
     conv15 = tf.layers.conv2d(
         inputs=conv14,
-        filters=3
+        filters=3,
         kernel=[7, 7],
         padding='same',
         activation=tf.nn.relu #Think this should actually be linear
