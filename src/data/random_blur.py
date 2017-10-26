@@ -91,9 +91,8 @@ if __name__ == '__main__':
     output_dir = os.path.join(project_dir, "data", "processed")
 
     raw_photos = os.listdir(input_img_dir)
-    count = 0
-    for photo in raw_photos[:50]:
-        count += 1
+
+    for count, photo in enumerate(raw_photos[:50]):
         path = os.path.join(input_img_dir, photo)
         img = cv2.imread(path)
         motion_blurred = motion_blur(img)
@@ -102,6 +101,6 @@ if __name__ == '__main__':
         # not happy with the rotation results yet
         # output_img = random_rotate(output_img)
 
-        output_name = photo[:-4] + '-blurred-' + str(count)
+        output_name = os.path.splitext(photo)[0] + '-blurred-' + str(count)
         output_filepath = os.path.join(output_dir, "{}.jpg".format(output_name))
         cv2.imwrite(output_filepath, output_img)
