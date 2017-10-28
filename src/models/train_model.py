@@ -1,5 +1,22 @@
 import tensorflow as tf
 import numpy as np
+import os
+
+def read_image(filename_queue):
+    reader = tf.WholeFileReader()
+    key, value = reader.read(raw_data_queue)
+    image = tf.image.decode_jpeg(value, channels=3)
+    return key, image
+
+
+def input_data():
+    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+    raw_data_path = os.path.join(project_dir, "data", "raw", "pre-blur")
+    raw_data_filenames = os.listdir(raw_data_path)
+    raw_data_queue = tf.train.string_input_producer(raw_data_filenames)
+    filename, image = read_image(raw_data_queue)
+    return filename, image
+
 
 def build_network(input_layer):
     conv1 = tf.layers.conv2d(
@@ -121,3 +138,13 @@ def build_network(input_layer):
         padding='same',
         activation=tf.nn.relu #Think this should actually be linear
     )
+
+
+if __name__ == '__main__':
+    label, image = input_data()
+    image_batch = tf.train.batch([image], batch_size=30)
+    label_batch = tf.train.batch([label], batch_size=30)
+
+    init = tf.initialize_all_variables()
+    sess = tf.Session()
+    sess.run(init)
