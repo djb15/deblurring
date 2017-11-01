@@ -18,7 +18,7 @@ def read_image(filename_queue):
     return original, blurred
 
 
-def input_data():
+def input_data(batch_size):
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
     raw_data_path = os.path.join(project_dir, "data", "raw", "pre-blur")
     raw_data_filenames = os.listdir(raw_data_path)
@@ -39,7 +39,7 @@ def input_data():
 
     input_images, ref_images = tf.train.batch(
         [blurred, original],
-        batch_size=10,
+        batch_size=batch_size,
         num_threads=1,
         capacity=100,  # Need to change this value to something meaningful
         dynamic_pad=True
@@ -173,38 +173,47 @@ def run_network(input_layer):
 
 
 def loss(pred, ref):
-    square_error = tf.nn.l2_loss(tf.subtract(pred, ref))
-    tf.add_to_collection('losses', square_error)
+    mse = tf.losses.mean_squared_error(ref, pred)
+    tf.add_to_collection('losses', mse)
     return tf.add_n(tf.get_collection("losses"), name="Total_loss")
 
 
-def train(total_loss, global_step):
-    return tf.train.GradientDescentOptimizer(1e-3).minimize(total_loss, global_step=global_step)
+def train(total_loss, global_step, learning_rate):
+    decay_steps = 100000
+    decay_rate = 0.99
+    decayed_learning_rate = tf.train.exponential_decay(learning_rate, global_step, decay_steps, decay_rate)
+    return tf.train.GradientDescentOptimizer(
+        decayed_learning_rate).minimize(total_loss, global_step=global_step)
 
 
 def main(argv=None):
+    learning_rate = 1e-6  # higher causes NaN issues
+    epochs = 50
+    batch_size = 20  # higher causes OOM issues on 4GB GPU
+
     with tf.Graph().as_default():
         global_step = tf.Variable(0, trainable=False)
 
-        input_images, ref_images = input_data()
+        input_images, ref_images = input_data(batch_size)
 
         predicted_output = run_network(input_images)
 
-        total_loss = loss(predicted_output, tf.cast(ref_images, dtype=tf.float32))
+        loss_op = loss(predicted_output, tf.cast(ref_images, dtype=tf.float32))
 
-        train_op = train(total_loss, global_step)
+        train_op = train(loss_op, global_step, learning_rate)
 
         init = tf.global_variables_initializer()
         sess = tf.Session()
         sess.run(init)
         tf.train.start_queue_runners(sess=sess)
 
-    for step in range(50):
+    for step in range(epochs):
         start_time = time.time()
-        _, loss_value = sess.run([train_op, total_loss])
+        _, loss_val = sess.run([train_op, loss_op])
         duration = time.time() - start_time
-        print(duration, loss_value)
-
+        print(
+            "Epoch {step}/{total_steps}\nBatch Loss: {:.4f}\nTime:{:.2f}s\n---"
+            .format(loss_val, duration, step=step, total_steps=epochs))
 
 if __name__ == '__main__':
     tf.app.run()
