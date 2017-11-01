@@ -41,7 +41,7 @@ def input_data(batch_size):
         [blurred, original],
         batch_size=batch_size,
         num_threads=1,
-        capacity=100,  # Need to change this value to something meaningful
+        capacity=400000,  # Need to change this value to something meaningful
         dynamic_pad=True
     )
 
@@ -179,8 +179,8 @@ def loss(pred, ref):
 
 
 def train(total_loss, global_step, learning_rate):
-    decay_steps = 100000
-    decay_rate = 0.99
+    decay_steps = 50
+    decay_rate = 0.96
     decayed_learning_rate = tf.train.exponential_decay(learning_rate, global_step, decay_steps, decay_rate)
     return tf.train.GradientDescentOptimizer(
         decayed_learning_rate).minimize(total_loss, global_step=global_step)
@@ -188,7 +188,7 @@ def train(total_loss, global_step, learning_rate):
 
 def main(argv=None):
     learning_rate = 1e-6  # higher causes NaN issues
-    epochs = 50
+    epochs = 2000
     batch_size = 20  # higher causes OOM issues on 4GB GPU
 
     with tf.Graph().as_default():
