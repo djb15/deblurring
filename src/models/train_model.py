@@ -33,7 +33,7 @@ def input_data():
         grouped_data.append(os.path.join(blurred_data_path, image_name))
 
 
-    raw_data_queue = tf.train.string_input_producer(grouped_data)
+    raw_data_queue = tf.train.string_input_producer(grouped_data, shuffle=False)
 
     original, blurred = read_image(raw_data_queue)
 
