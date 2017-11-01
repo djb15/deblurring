@@ -69,11 +69,11 @@ def gaussian_blur(img):
     size = int(max_size * random.uniform(0.3, 1.0))
     # nearest odd number
     size = size - 1 if size % 2 is 0 else size
-    return cv2.GaussianBlur(img,(size, size), 0, 0)
+    return cv2.GaussianBlur(img, (size, size), 0, 0)
 
 
 def add_noise(img):
-    row,col,ch= img.shape
+    row, col, ch = img.shape
     mean = 0
     variance = random.uniform(20, 75)
     sigma = variance**0.5
@@ -81,8 +81,9 @@ def add_noise(img):
     gauss = gauss.reshape(row, col, ch)
     return img + gauss
 
+
 def random_rotate(img):
-    angle = random.uniform(-15,15)
+    angle = random.uniform(-15, 15)
     return rotate_bound(img, angle, border=0)
 
 if __name__ == '__main__':
@@ -92,15 +93,18 @@ if __name__ == '__main__':
 
     raw_photos = os.listdir(input_img_dir)
 
-    for count, photo in enumerate(raw_photos[:50]):
+    blurred_photos_per_original = 100
+
+    for count, photo in enumerate(raw_photos):
         path = os.path.join(input_img_dir, photo)
         img = cv2.imread(path)
-        motion_blurred = motion_blur(img)
-        gaussian_blurred = gaussian_blur(motion_blurred)
-        output_img = add_noise(gaussian_blurred)
-        # not happy with the rotation results yet
-        # output_img = random_rotate(output_img)
+        for i in range(blurred_photos_per_original):
+            motion_blurred = motion_blur(img)
+            gaussian_blurred = gaussian_blur(motion_blurred)
+            output_img = add_noise(gaussian_blurred)
+            # not happy with the rotation results yet
+            # output_img = random_rotate(output_img)
 
-        output_name = os.path.splitext(photo)[0] + '-blurred-' + str(count)
-        output_filepath = os.path.join(output_dir, "{}.jpg".format(output_name))
-        cv2.imwrite(output_filepath, output_img)
+            output_name = os.path.splitext(photo)[0] + '-blurred-' + str(count) + str(i)
+            output_filepath = os.path.join(output_dir, "{}.jpg".format(output_name))
+            cv2.imwrite(output_filepath, output_img)
