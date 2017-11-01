@@ -166,7 +166,7 @@ def run_network(input_layer):
         filters=3,
         kernel_size=[7, 7],
         padding='same',
-        activation=tf.nn.relu #Think this should actually be linear
+        activation=None
     )
 
     return conv15
