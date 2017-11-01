@@ -3,6 +3,7 @@ import numpy as np
 import os
 import time
 
+
 def read_image(filename_queue):
     reader = tf.WholeFileReader()
 
@@ -29,9 +30,8 @@ def input_data():
 
     for image_name in blurred_data_filenames:
         corresponding_raw = image_name.split('-blurred-')[0] + '.jpg'
-        grouped_data.append(os.path.join(raw_data_path, corresponding_raw)) # Append original first then blurred
+        grouped_data.append(os.path.join(raw_data_path, corresponding_raw))  # Append original first then blurred
         grouped_data.append(os.path.join(blurred_data_path, image_name))
-
 
     raw_data_queue = tf.train.string_input_producer(grouped_data, shuffle=False)
 
@@ -39,9 +39,9 @@ def input_data():
 
     input_images, ref_images = tf.train.batch(
         [blurred, original],
-        batch_size = 30,
-        num_threads = 1,
-        capacity = 100, # Need to change this value to something meaningful
+        batch_size=10,
+        num_threads=1,
+        capacity=100,  # Need to change this value to something meaningful
         dynamic_pad=True
     )
 
@@ -171,13 +171,16 @@ def run_network(input_layer):
 
     return conv15
 
+
 def loss(pred, ref):
     square_error = tf.nn.l2_loss(tf.subtract(pred, ref))
     tf.add_to_collection('losses', square_error)
     return tf.add_n(tf.get_collection("losses"), name="Total_loss")
 
+
 def train(total_loss, global_step):
     return tf.train.GradientDescentOptimizer(1e-3).minimize(total_loss, global_step=global_step)
+
 
 def main(argv=None):
     with tf.Graph().as_default():
@@ -187,7 +190,7 @@ def main(argv=None):
 
         predicted_output = run_network(input_images)
 
-        total_loss = loss(predicted_output, tf.cast(ref_images, dtype= tf.float32))
+        total_loss = loss(predicted_output, tf.cast(ref_images, dtype=tf.float32))
 
         train_op = train(total_loss, global_step)
 
@@ -196,7 +199,7 @@ def main(argv=None):
         sess.run(init)
         tf.train.start_queue_runners(sess=sess)
 
-    for step in range(5):
+    for step in range(50):
         start_time = time.time()
         _, loss_value = sess.run([train_op, total_loss])
         duration = time.time() - start_time
