@@ -5,13 +5,12 @@ import time
 
 
 def read_image(filename_queue):
-    reader = tf.WholeFileReader()
 
-    key, value = reader.read(filename_queue)
+    value = tf.read_file(filename_queue[0])
     original = tf.image.decode_jpeg(value, channels=3)
     original = tf.cast(original, tf.float32)
 
-    key, value = reader.read(filename_queue)
+    value = tf.read_file(filename_queue[1])
     blurred = tf.image.decode_jpeg(value, channels=3)
     blurred = tf.cast(blurred, tf.float32)
 
@@ -26,14 +25,15 @@ def input_data(batch_size):
     blurred_data_path = os.path.join(project_dir, "data", "processed")
     blurred_data_filenames = os.listdir(blurred_data_path)
 
-    grouped_data = []
+    raw_data = []
+    blurred_data = []
 
     for image_name in blurred_data_filenames:
         corresponding_raw = image_name.split('-blurred-')[0] + '.jpg'
-        grouped_data.append(os.path.join(raw_data_path, corresponding_raw))  # Append original first then blurred
-        grouped_data.append(os.path.join(blurred_data_path, image_name))
+        raw_data.append(os.path.join(raw_data_path, corresponding_raw))
+        blurred_data.append(os.path.join(blurred_data_path, image_name))  # Append original first then blurred
 
-    raw_data_queue = tf.train.string_input_producer(grouped_data, shuffle=False, capacity=2000)
+    raw_data_queue = tf.train.slice_input_producer([raw_data, blurred_data])
 
     original, blurred = read_image(raw_data_queue)
 
@@ -41,7 +41,7 @@ def input_data(batch_size):
         [blurred, original],
         batch_size=batch_size,
         num_threads=1,
-        capacity=1000,  # The prefetch buffer for this batch train
+        capacity=40,  # The prefetch buffer for this batch train
         dynamic_pad=True
     )
 
@@ -188,7 +188,7 @@ def train(total_loss, global_step, learning_rate):
 
 def main(argv=None):
     learning_rate = 1e-6  # higher causes NaN issues
-    epochs = 2000
+    epochs = 5
     batch_size = 20  # higher causes OOM issues on 4GB GPU
 
     with tf.Graph().as_default():
