@@ -33,7 +33,7 @@ def input_data(batch_size):
         grouped_data.append(os.path.join(raw_data_path, corresponding_raw))  # Append original first then blurred
         grouped_data.append(os.path.join(blurred_data_path, image_name))
 
-    raw_data_queue = tf.train.string_input_producer(grouped_data, shuffle=False)
+    raw_data_queue = tf.train.string_input_producer(grouped_data, shuffle=False, capacity=2000)
 
     original, blurred = read_image(raw_data_queue)
 
@@ -41,7 +41,7 @@ def input_data(batch_size):
         [blurred, original],
         batch_size=batch_size,
         num_threads=1,
-        capacity=400000,  # Need to change this value to something meaningful
+        capacity=1000,  # The prefetch buffer for this batch train
         dynamic_pad=True
     )
 
