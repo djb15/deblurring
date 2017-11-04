@@ -22,7 +22,7 @@ def save_image(image_data):
     filename = time.strftime("%Y%m%d-%H%M%S") + ".jpg"
     file_path = os.path.join(project_dir, "data", "predictions", filename)
     converted_image_data = tf.image.convert_image_dtype(image_data, dtype=tf.uint8)[0]
-    image_jpeg = tf.image.encode_jpeg(converted_image_data)
+    image_jpeg = tf.image.encode_jpeg(converted_image_data, format='rgb')
     return tf.write_file(file_path, image_jpeg)
 
 
@@ -223,7 +223,7 @@ def train(total_loss, global_step, learning_rate):
 def main(argv=None):
     learning_rate = 1e-6  # higher causes NaN issues
     epochs = 50
-    batch_size = 5  # higher causes OOM issues on 4GB GPU
+    batch_size = 10  # higher causes OOM issues on 4GB GPU
 
     with tf.Graph().as_default():
         global_step = tf.Variable(0, trainable=False)
@@ -249,11 +249,11 @@ def main(argv=None):
         start_time = time.time()
         _, loss_val = sess.run([train_op, loss_op])
         duration = time.time() - start_time
+        sess.run(save_op)
         print(
             "Epoch {step}/{total_steps}\nBatch Loss: {:.4f}\nTime:{:.2f}s\n---"
             .format(loss_val, duration, step=step, total_steps=epochs - 1))
 
-    sess.run(save_op)
 
 if __name__ == '__main__':
     tf.app.run()
