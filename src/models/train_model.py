@@ -1,5 +1,4 @@
 import tensorflow as tf
-import numpy as np
 import os
 import time
 
@@ -20,7 +19,6 @@ def read_image(filename_queue):
 def input_data(batch_size):
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
     raw_data_path = os.path.join(project_dir, "data", "raw", "pre-blur")
-    raw_data_filenames = os.listdir(raw_data_path)
 
     blurred_data_path = os.path.join(project_dir, "data", "processed")
     blurred_data_filenames = os.listdir(blurred_data_path)
@@ -214,6 +212,8 @@ def main(argv=None):
         print(
             "Epoch {step}/{total_steps}\nBatch Loss: {:.4f}\nTime:{:.2f}s\n---"
             .format(loss_val, duration, step=step, total_steps=epochs))
+
+    predicted_output = run_network(input_images)
 
 if __name__ == '__main__':
     tf.app.run()
