@@ -16,9 +16,19 @@ def read_image(filename_queue):
     return original, blurred
 
 
-def input_data(batch_size):
+def save_image(image_data):
+    print("Saving image")
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
-    raw_data_path = os.path.join(project_dir, "data", "raw", "pre-blur")
+    filename = time.strftime("%Y%m%d-%H%M%S") + ".jpg"
+    file_path = os.path.join(project_dir, "data", "predictions", filename)
+    converted_image_data = tf.image.convert_image_dtype(image_data, dtype=tf.uint8)[0]
+    image_jpeg = tf.image.encode_jpeg(converted_image_data)
+    return tf.write_file(file_path, image_jpeg)
+
+
+def input_data(batch_size, directory="pre-blur"):
+    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+    raw_data_path = os.path.join(project_dir, "data", "raw", directory)
 
     blurred_data_path = os.path.join(project_dir, "data", "processed")
     blurred_data_filenames = os.listdir(blurred_data_path)
@@ -44,6 +54,32 @@ def input_data(batch_size):
     )
 
     return input_images, ref_images
+
+
+def get_test_data():
+    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+    raw_data_path = os.path.join(project_dir, "data", "raw", "validation")
+    raw_data_filenames = os.listdir(raw_data_path)
+    raw_data = []
+
+    for image_name in raw_data_filenames:
+        raw_data.append(os.path.join(raw_data_path, image_name))
+
+    raw_data_queue = tf.train.slice_input_producer([raw_data])
+
+    value = tf.read_file(raw_data_queue[0])
+    original = tf.image.decode_jpeg(value, channels=3)
+    original = tf.cast(original, tf.float32)
+
+    test_images = tf.train.batch(
+        [original],
+        batch_size=10,
+        num_threads=1,
+        capacity=10,  # The prefetch buffer for this batch train
+        dynamic_pad=True
+    )
+
+    return test_images
 
 
 def run_network(input_layer):
@@ -186,8 +222,8 @@ def train(total_loss, global_step, learning_rate):
 
 def main(argv=None):
     learning_rate = 1e-6  # higher causes NaN issues
-    epochs = 5
-    batch_size = 20  # higher causes OOM issues on 4GB GPU
+    epochs = 50
+    batch_size = 5  # higher causes OOM issues on 4GB GPU
 
     with tf.Graph().as_default():
         global_step = tf.Variable(0, trainable=False)
@@ -200,6 +236,10 @@ def main(argv=None):
 
         train_op = train(loss_op, global_step, learning_rate)
 
+        test_data = get_test_data()
+        test_predictions = run_network(test_data)
+        save_op = save_image(test_predictions)
+
         init = tf.global_variables_initializer()
         sess = tf.Session()
         sess.run(init)
@@ -211,9 +251,9 @@ def main(argv=None):
         duration = time.time() - start_time
         print(
             "Epoch {step}/{total_steps}\nBatch Loss: {:.4f}\nTime:{:.2f}s\n---"
-            .format(loss_val, duration, step=step, total_steps=epochs))
+            .format(loss_val, duration, step=step, total_steps=epochs - 1))
 
-    predicted_output = run_network(input_images)
+    sess.run(save_op)
 
 if __name__ == '__main__':
     tf.app.run()
