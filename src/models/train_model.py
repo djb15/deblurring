@@ -5,7 +5,6 @@ import time
 
 
 def read_image(filename_queue):
-
     value = tf.read_file(filename_queue[0])
     original = tf.image.decode_jpeg(value, channels=3)
     original = tf.cast(original, tf.float32)
@@ -15,6 +14,15 @@ def read_image(filename_queue):
     blurred = tf.cast(blurred, tf.float32)
 
     return original, blurred
+
+def read_test_images(filename_queue):
+    reader = tf.WholeFileReader()
+
+    key, value = reader.read(filename_queue)
+    test = tf.image.decode_jpeg(value, channels=3)
+    test = tf.cast(test, tf.float32)
+
+    return key, test
 
 
 def input_data(batch_size):
@@ -46,6 +54,34 @@ def input_data(batch_size):
     )
 
     return input_images, ref_images
+
+
+def test_data():
+    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+    test_images = os.path.join(project_dir, 'data', 'test', 'raw')
+    test_image_filenames = os.listdir(test_images)
+
+    test_image_paths = []
+
+    for image in test_image_filenames:
+        test_image_paths.append(os.path.join(test_images, image))
+
+    test_image_queue = tf.train.string_input_producer(test_image_paths)
+
+    test_names, test_tensors = read_test_images(test_image_queue)
+    test_tensors = tf.expand_dims(test_tensors, 0)
+
+    return test_names, test_tensors
+
+
+def encode_test(test_names, test_predictions):
+    test_predictions = tf.cast(test_predictions, tf.uint8)
+    test_predictions = tf.squeeze(test_predictions)
+    encoded_jpeg = tf.image.encode_jpeg(test_predictions)
+    fwrite = tf.write_file(test_names, encoded_jpeg)
+    print('file saved')
+
+    return fwrite
 
 
 def run_network(input_layer):
@@ -188,8 +224,8 @@ def train(total_loss, global_step, learning_rate):
 
 def main(argv=None):
     learning_rate = 1e-6  # higher causes NaN issues
-    epochs = 5
-    batch_size = 20  # higher causes OOM issues on 4GB GPU
+    epochs = 40000
+    batch_size = 10  # higher causes OOM issues on 4GB GPU
 
     with tf.Graph().as_default():
         global_step = tf.Variable(0, trainable=False)
@@ -202,18 +238,24 @@ def main(argv=None):
 
         train_op = train(loss_op, global_step, learning_rate)
 
+        test_names, test_tensors = test_data()
+        test_predictions = run_network(test_tensors)
+        fwrite = encode_test(test_names, test_predictions)
+
         init = tf.global_variables_initializer()
         sess = tf.Session()
         sess.run(init)
         tf.train.start_queue_runners(sess=sess)
 
-    for step in range(epochs):
+    for step in range(5):
         start_time = time.time()
         _, loss_val = sess.run([train_op, loss_op])
         duration = time.time() - start_time
         print(
             "Epoch {step}/{total_steps}\nBatch Loss: {:.4f}\nTime:{:.2f}s\n---"
             .format(loss_val, duration, step=step, total_steps=epochs))
+
+    sess.run(fwrite)
 
 if __name__ == '__main__':
     tf.app.run()
