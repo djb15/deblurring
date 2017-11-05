@@ -8,12 +8,14 @@ def read_image(filename_queue):
     value = tf.read_file(filename_queue[0])
     original = tf.image.decode_jpeg(value, channels=3)
     original = tf.cast(original, tf.float32)
+    cropped_original = tf.image.crop_to_bounding_box(original, 8, 8, 3, 3)
 
     value = tf.read_file(filename_queue[1])
     blurred = tf.image.decode_jpeg(value, channels=3)
     blurred = tf.cast(blurred, tf.float32)
+    cropped_blurred = tf.image.crop_to_bounding_box(original, 0, 0, 20, 20)
 
-    return original, blurred
+    return cropped_original, cropped_blurred
 
 
 def save_image(image_data):
@@ -49,7 +51,7 @@ def input_data(batch_size, directory="pre-blur"):
         [blurred, original],
         batch_size=batch_size,
         num_threads=1,
-        capacity=40,  # The prefetch buffer for this batch train
+        capacity=200,  # The prefetch buffer for this batch train
         dynamic_pad=True
     )
 
@@ -73,9 +75,9 @@ def get_test_data():
 
     test_images = tf.train.batch(
         [original],
-        batch_size=10,
+        batch_size=54,
         num_threads=1,
-        capacity=10,  # The prefetch buffer for this batch train
+        capacity=300,  # The prefetch buffer for this batch train
         dynamic_pad=True
     )
 
@@ -86,8 +88,8 @@ def run_network(input_layer):
     conv1 = tf.layers.conv2d(
         inputs=input_layer,
         filters=128,
-        kernel_size=[19, 19],
-        padding='same',
+        kernel_size=[8, 8],
+        padding='valid',
         activation=tf.nn.relu
     )
 
@@ -95,7 +97,7 @@ def run_network(input_layer):
         inputs=conv1,
         filters=320,
         kernel_size=[1, 1],
-        padding='same',
+        padding='valid',
         activation=tf.nn.relu
     )
 
@@ -103,7 +105,7 @@ def run_network(input_layer):
         inputs=conv2,
         filters=320,
         kernel_size=[1, 1],
-        padding='same',
+        padding='valid',
         activation=tf.nn.relu
     )
 
@@ -111,7 +113,7 @@ def run_network(input_layer):
         inputs=conv3,
         filters=320,
         kernel_size=[1, 1],
-        padding='same',
+        padding='valid',
         activation=tf.nn.relu
     )
 
@@ -119,31 +121,47 @@ def run_network(input_layer):
         inputs=conv4,
         filters=128,
         kernel_size=[1, 1],
-        padding='same',
+        padding='valid',
+        activation=tf.nn.relu
+    )
+
+    conv11 = tf.layers.conv2d(
+        inputs=conv5,
+        filters=128,
+        kernel_size=[1, 1],
+        padding='valid',
+        activation=tf.nn.relu
+    )
+
+    conv12 = tf.layers.conv2d(
+        inputs=conv11,
+        filters=128,
+        kernel_size=[3, 3],
+        padding='valid',
         activation=tf.nn.relu
     )
 
     conv13 = tf.layers.conv2d(
         inputs=conv5,
         filters=256,
-        kernel_size=[1, 1],
-        padding='same',
+        kernel_size=[3, 3],
+        padding='valid',
         activation=tf.nn.relu
     )
 
     conv14 = tf.layers.conv2d(
         inputs=conv13,
         filters=64,
-        kernel_size=[7, 7],
-        padding='same',
+        kernel_size=[5, 5],
+        padding='valid',
         activation=tf.nn.relu
     )
 
     conv15 = tf.layers.conv2d(
         inputs=conv14,
         filters=3,
-        kernel_size=[7, 7],
-        padding='same',
+        kernel_size=[3, 3],
+        padding='valid',
         activation=None
     )
 
@@ -156,15 +174,18 @@ def loss(pred, ref):
     return tf.add_n(tf.get_collection("losses"), name="Total_loss")
 
 
+
 def train(total_loss, global_step, learning_rate):
+    tf.summary.scalar("Total_loss", total_loss)
     return tf.train.AdamOptimizer(
         learning_rate, epsilon=0.1).minimize(total_loss, global_step=global_step)
 
 
 def main(argv=None):
-    learning_rate = 1e-4  # higher causes NaN issues
-    epochs = 500
-    batch_size = 15  # higher causes OOM issues on 4GB GPU
+    learning_rate = 4e-5  # higher causes NaN issues
+    epochs = 40000
+    batch_size = 54  # higher causes OOM issues on 4GB GPU
+
 
     with tf.Graph().as_default():
         global_step = tf.Variable(0, trainable=False)
@@ -183,15 +204,21 @@ def main(argv=None):
 
         saver = tf.train.Saver()
 
+        summary_op = tf.summary.merge_all()
+
         init = tf.global_variables_initializer()
         sess = tf.Session()
         sess.run(init)
         tf.train.start_queue_runners(sess=sess)
 
+        summary_writer = tf.summary.FileWriter('./', graph=tf.get_default_graph())
+
     for step in range(epochs):
         start_time = time.time()
         _, loss_val = sess.run([train_op, loss_op])
         duration = time.time() - start_time
+        summary_str = sess.run(summary_op)
+        summary_writer.add_summary(summary_str, step)
         if step % 1000 == 0:
             sess.run(save_op)
             saver.save(sess, '../features', global_step=step)
