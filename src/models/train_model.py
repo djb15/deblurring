@@ -123,48 +123,8 @@ def run_network(input_layer):
         activation=tf.nn.relu
     )
 
-    conv6 = tf.layers.conv2d(
-        inputs=conv5,
-        filters=128,
-        kernel_size=[3, 3],
-        padding='same',
-        activation=tf.nn.relu
-    )
-
-    conv7 = tf.layers.conv2d(
-        inputs=conv6,
-        filters=512,
-        kernel_size=[1, 1],
-        padding='same',
-        activation=tf.nn.relu
-    )
-
-    conv8 = tf.layers.conv2d(
-        inputs=conv7,
-        filters=128,
-        kernel_size=[5, 5],
-        padding='same',
-        activation=tf.nn.relu
-    )
-
-    conv9 = tf.layers.conv2d(
-        inputs=conv8,
-        filters=128,
-        kernel_size=[5, 5],
-        padding='same',
-        activation=tf.nn.relu
-    )
-
-    conv10 = tf.layers.conv2d(
-        inputs=conv9,
-        filters=128,
-        kernel_size=[3, 3],
-        padding='same',
-        activation=tf.nn.relu
-    )
-
     conv11 = tf.layers.conv2d(
-        inputs=conv10,
+        inputs=conv5,
         filters=128,
         kernel_size=[5, 5],
         padding='same',
@@ -213,17 +173,15 @@ def loss(pred, ref):
 
 
 def train(total_loss, global_step, learning_rate):
-    decay_steps = 50
-    decay_rate = 0.96
-    decayed_learning_rate = tf.train.exponential_decay(learning_rate, global_step, decay_steps, decay_rate)
-    return tf.train.GradientDescentOptimizer(
+    decayed_learning_rate = learning_rate
+    return tf.train.AdamOptimizer(
         decayed_learning_rate).minimize(total_loss, global_step=global_step)
 
 
 def main(argv=None):
-    learning_rate = 1e-6  # higher causes NaN issues
-    epochs = 50
-    batch_size = 10  # higher causes OOM issues on 4GB GPU
+    learning_rate = 1e-4  # higher causes NaN issues
+    epochs = 500
+    batch_size = 15  # higher causes OOM issues on 4GB GPU
 
     with tf.Graph().as_default():
         global_step = tf.Variable(0, trainable=False)
