@@ -181,6 +181,8 @@ def main(argv=None):
         test_predictions = run_network(test_data)
         save_op = save_image(test_predictions)
 
+        saver = tf.train.Saver()
+
         init = tf.global_variables_initializer()
         sess = tf.Session()
         sess.run(init)
@@ -190,7 +192,9 @@ def main(argv=None):
         start_time = time.time()
         _, loss_val = sess.run([train_op, loss_op])
         duration = time.time() - start_time
-        sess.run(save_op)
+        if step % 1000 == 0:
+            sess.run(save_op)
+            saver.save(sess, '../features', global_step=step)
         print(
             "Epoch {step}/{total_steps}\nBatch Loss: {:.4f}\nTime:{:.2f}s\n---"
             .format(loss_val, duration, step=step, total_steps=epochs - 1))
