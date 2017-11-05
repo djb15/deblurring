@@ -123,24 +123,8 @@ def run_network(input_layer):
         activation=tf.nn.relu
     )
 
-    conv11 = tf.layers.conv2d(
-        inputs=conv5,
-        filters=128,
-        kernel_size=[5, 5],
-        padding='same',
-        activation=tf.nn.relu
-    )
-
-    conv12 = tf.layers.conv2d(
-        inputs=conv11,
-        filters=128,
-        kernel_size=[5, 5],
-        padding='same',
-        activation=tf.nn.relu
-    )
-
     conv13 = tf.layers.conv2d(
-        inputs=conv12,
+        inputs=conv5,
         filters=256,
         kernel_size=[1, 1],
         padding='same',
@@ -173,9 +157,8 @@ def loss(pred, ref):
 
 
 def train(total_loss, global_step, learning_rate):
-    decayed_learning_rate = learning_rate
     return tf.train.AdamOptimizer(
-        decayed_learning_rate).minimize(total_loss, global_step=global_step)
+        learning_rate, epsilon=0.1).minimize(total_loss, global_step=global_step)
 
 
 def main(argv=None):
