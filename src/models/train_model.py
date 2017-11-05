@@ -8,7 +8,7 @@ def read_image(filename_queue):
     value = tf.read_file(filename_queue[0])
     original = tf.image.decode_jpeg(value, channels=3)
     original = tf.cast(original, tf.float32)
-    cropped_original = tf.image.crop_to_bounding_box(original, 8, 8, 3, 3)
+    cropped_original = tf.image.crop_to_bounding_box(original, 8, 8, 5, 5)
 
     value = tf.read_file(filename_queue[1])
     blurred = tf.image.decode_jpeg(value, channels=3)
@@ -219,7 +219,7 @@ def main(argv=None):
         duration = time.time() - start_time
         summary_str = sess.run(summary_op)
         summary_writer.add_summary(summary_str, step)
-        if step % 1000 == 0:
+        if step % 500 == 0:
             sess.run(save_op)
             saver.save(sess, '../features', global_step=step)
         print(
