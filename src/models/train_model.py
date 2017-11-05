@@ -142,7 +142,7 @@ def run_network(input_layer):
     )
 
     conv13 = tf.layers.conv2d(
-        inputs=conv12,
+        inputs=conv5,
         filters=256,
         kernel_size=[3, 3],
         padding='valid',
@@ -178,13 +178,14 @@ def loss(pred, ref):
 def train(total_loss, global_step, learning_rate):
     tf.summary.scalar("Total_loss", total_loss)
     return tf.train.AdamOptimizer(
-        learning_rate).minimize(total_loss, global_step=global_step)
+        learning_rate, epsilon=0.1).minimize(total_loss, global_step=global_step)
 
 
 def main(argv=None):
     learning_rate = 4e-5  # higher causes NaN issues
     epochs = 40000
     batch_size = 54  # higher causes OOM issues on 4GB GPU
+
 
     with tf.Graph().as_default():
         global_step = tf.Variable(0, trainable=False)
