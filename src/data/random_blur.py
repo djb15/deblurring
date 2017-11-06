@@ -98,6 +98,7 @@ if __name__ == '__main__':
     for count, photo in enumerate(raw_photos):
         path = os.path.join(input_img_dir, photo)
         img = cv2.imread(path)
+        print(count)
         for i in range(blurred_photos_per_original):
             motion_blurred = motion_blur(img)
             gaussian_blurred = gaussian_blur(motion_blurred)
@@ -105,6 +106,21 @@ if __name__ == '__main__':
             # not happy with the rotation results yet
             # output_img = random_rotate(output_img)
 
+            output_width, output_height = output_img.shape[:2]
+
+            h_offset = random.randint(0, output_height-20)
+            w_offset = random.randint(0, output_width-20)
+
+            w_bound = w_offset + 20
+            h_bound = h_offset + 20
+
+            output_img = output_img[w_offset:w_bound, h_offset:h_bound]
+            cropped_img = img[w_offset+3:w_bound-3, h_offset+3:h_bound-3]
+
             output_name = os.path.splitext(photo)[0] + '-blurred-' + str(count) + str(i)
             output_filepath = os.path.join(output_dir, "{}.jpg".format(output_name))
             cv2.imwrite(output_filepath, output_img)
+
+            cropped_input_name = os.path.splitext(photo)[0] + '-cropped-' + str(count) + str(i)
+            cropped_input_filepath = os.path.join(project_dir, "data", "raw", "pre-blur-cropped", "{}.jpg".format(cropped_input_name))
+            cv2.imwrite(cropped_input_filepath, cropped_img)
