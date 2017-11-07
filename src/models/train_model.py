@@ -85,106 +85,192 @@ def get_test_data():
 
 
 def run_network(input_layer):
-    conv1 = tf.layers.conv2d(
-        inputs=input_layer,
-        filters=128,
-        kernel_size=[5, 5],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv2 = tf.layers.conv2d(
-        inputs=conv1,
-        filters=320,
-        kernel_size=[1, 1],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv3 = tf.layers.conv2d(
-        inputs=conv2,
-        filters=320,
-        kernel_size=[1, 1],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv4 = tf.layers.conv2d(
-        inputs=conv3,
-        filters=320,
-        kernel_size=[1, 1],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv5 = tf.layers.conv2d(
-        inputs=conv4,
-        filters=128,
-        kernel_size=[1, 1],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv6 = tf.layers.conv2d(
-        inputs=conv5,
-        filters=128,
-        kernel_size=[1, 1],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv7 = tf.layers.conv2d(
-        inputs=conv6,
-        filters=64,
-        kernel_size=[1, 1],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-
-    # conv11 = tf.layers.conv2d(
-    #     inputs=conv5,
+    # conv1 = tf.layers.conv2d(
+    #     inputs=input_layer,
     #     filters=128,
     #     kernel_size=[5, 5],
     #     padding='valid',
     #     activation=tf.nn.relu
     # )
-
-
-
-    # conv12 = tf.layers.conv2d(
+    #
+    # conv2 = tf.layers.conv2d(
+    #     inputs=conv1,
+    #     filters=320,
+    #     kernel_size=[1, 1],
+    #     padding='valid',
+    #     activation=tf.nn.relu
+    # )
+    #
+    # conv3 = tf.layers.conv2d(
+    #     inputs=conv2,
+    #     filters=320,
+    #     kernel_size=[1, 1],
+    #     padding='valid',
+    #     activation=tf.nn.relu
+    # )
+    #
+    # conv4 = tf.layers.conv2d(
+    #     inputs=conv3,
+    #     filters=320,
+    #     kernel_size=[1, 1],
+    #     padding='valid',
+    #     activation=tf.nn.relu
+    # )
+    #
+    # conv5 = tf.layers.conv2d(
+    #     inputs=conv4,
+    #     filters=128,
+    #     kernel_size=[1, 1],
+    #     padding='valid',
+    #     activation=tf.nn.relu
+    # )
+    #
+    # conv6 = tf.layers.conv2d(
     #     inputs=conv5,
+    #     filters=128,
+    #     kernel_size=[1, 1],
+    #     padding='valid',
+    #     activation=tf.nn.relu
+    # )
+    #
+    # conv7 = tf.layers.conv2d(
+    #     inputs=conv6,
     #     filters=64,
-    #     kernel_size=[3, 3],
+    #     kernel_size=[1, 1],
     #     padding='valid',
     #     activation=tf.nn.relu
     # )
-
-    # conv13 = tf.layers.conv2d(
-    #     inputs=conv12,
-    #     filters=256,
-    #     kernel_size=[3, 3],
-    #     padding='valid',
-    #     activation=tf.nn.relu
-    # )
-
-    conv14 = tf.layers.conv2d(
-        inputs=conv7,
-        filters=3,
-        kernel_size=[3, 3],
-        padding='valid',
-        activation=None
-    )
-
-    # conv15 = tf.layers.conv2d(
-    #     inputs=conv14,
+    #
+    # conv14 = tf.layers.conv2d(
+    #     inputs=conv7,
     #     filters=3,
-    #     kernel_size=[5, 5],
+    #     kernel_size=[3, 3],
     #     padding='valid',
     #     activation=None
     # )
 
-    return conv14
+     conv1 = tf.layers.conv2d(
+         inputs=input_layer,
+         filters=128,
+         kernel_size=[9, 9],
+         padding='same',
+         activation=tf.nn.relu
+     )
+
+     conv2 = tf.layers.conv2d(
+         inputs=conv1,
+         filters=320,
+         kernel_size=[1, 1],
+         padding='same',
+         activation=tf.nn.relu
+     )
+
+     conv3 = tf.layers.conv2d(
+         inputs=conv2,
+         filters=320,
+         kernel_size=[1, 1],
+         padding='same',
+         activation=tf.nn.relu
+     )
+
+     conv4 = tf.layers.conv2d(
+         inputs=conv3,
+         filters=320,
+         kernel_size=[1, 1],
+         padding='same',
+         activation=tf.nn.relu
+     )
+
+     conv5 = tf.layers.conv2d(
+         inputs=conv4,
+         filters=128,
+         kernel_size=[1, 1],
+         padding='same',
+         activation=tf.nn.relu
+     )
+
+     conv6 = tf.layers.conv2d(
+         inputs=conv5,
+         filters=128,
+         kernel_size=[3, 3],
+         padding='same',
+         activation=tf.nn.relu
+     )
+
+     conv7 = tf.layers.conv2d(
+         inputs=conv6,
+         filters=512,
+         kernel_size=[1, 1],
+         padding='same',
+         activation=tf.nn.relu
+     )
+
+     conv8 = tf.layers.conv2d(
+         inputs=conv7,
+         filters=128,
+         kernel_size=[5, 5],
+         padding='valid',
+         activation=tf.nn.relu
+     )
+
+     conv9 = tf.layers.conv2d(
+         inputs=conv8,
+         filters=128,
+         kernel_size=[5, 5],
+         padding='same',
+         activation=tf.nn.relu
+     )
+
+     conv10 = tf.layers.conv2d(
+         inputs=conv9,
+         filters=128,
+         kernel_size=[3, 3],
+         padding='valid',
+         activation=tf.nn.relu
+     )
+
+     conv11 = tf.layers.conv2d(
+         inputs=conv10,
+         filters=128,
+         kernel_size=[5, 5],
+         padding='same',
+         activation=tf.nn.relu
+     )
+
+     conv12 = tf.layers.conv2d(
+         inputs=conv11,
+         filters=128,
+         kernel_size=[5, 5],
+         padding='same',
+         activation=tf.nn.relu
+     )
+
+     conv13 = tf.layers.conv2d(
+         inputs=conv12,
+         filters=256,
+         kernel_size=[1, 1],
+         padding='same',
+         activation=tf.nn.relu
+     )
+
+     conv14 = tf.layers.conv2d(
+         inputs=conv13,
+         filters=64,
+         kernel_size=[7, 7],
+         padding='same',
+         activation=tf.nn.relu
+     )
+
+     conv15 = tf.layers.conv2d(
+         inputs=conv14,
+         filters=3,
+         kernel_size=[7, 7],
+         padding='same',
+         activation=None
+     )
+
+     return conv15
+
 
 
 def loss(pred, ref):
@@ -196,13 +282,14 @@ def loss(pred, ref):
 
 def train(total_loss, global_step, learning_rate):
     tf.summary.scalar("Total_loss", total_loss)
-    return tf.train.AdamOptimizer(
-        learning_rate, epsilon=0.1).minimize(total_loss, global_step=global_step)
+    learning_rate = tf.train.exponential_decay(learning_rate, global_step, 100000, 0.5)
+    return tf.train.MomentumOptimizer(
+        learning_rate, 0.0001, use_nesterov=False).minimize(total_loss, global_step=global_step)
 
 
 def main(argv=None):
-    learning_rate = 1e-3  # higher causes NaN issues
-    epochs = 40000
+    learning_rate = 4e-5  # higher causes NaN issues
+    epochs = 400000
     batch_size = 54  # higher causes OOM issues on 4GB GPU
 
 
