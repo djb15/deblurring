@@ -8,14 +8,12 @@ def read_image(filename_queue):
     value = tf.read_file(filename_queue[0])
     original = tf.image.decode_jpeg(value, channels=3)
     original = tf.cast(original, tf.float32)
-    cropped_original = tf.image.crop_to_bounding_box(original, 8, 8, 5, 5)
 
     value = tf.read_file(filename_queue[1])
     blurred = tf.image.decode_jpeg(value, channels=3)
     blurred = tf.cast(blurred, tf.float32)
-    cropped_blurred = tf.image.crop_to_bounding_box(original, 0, 0, 20, 20)
 
-    return cropped_original, cropped_blurred
+    return original, blurred
 
 
 def save_image(image_data):
@@ -28,7 +26,7 @@ def save_image(image_data):
     return tf.write_file(file_path, image_jpeg)
 
 
-def input_data(batch_size, directory="pre-blur"):
+def input_data(batch_size, directory="pre-blur-cropped"):
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
     raw_data_path = os.path.join(project_dir, "data", "raw", directory)
 
@@ -39,7 +37,8 @@ def input_data(batch_size, directory="pre-blur"):
     blurred_data = []
 
     for image_name in blurred_data_filenames:
-        corresponding_raw = image_name.split('-blurred-')[0] + '.jpg'
+        base_name = image_name.split('-blurred-')
+        corresponding_raw = base_name[0] + '-cropped-' + base_name[1]
         raw_data.append(os.path.join(raw_data_path, corresponding_raw))
         blurred_data.append(os.path.join(blurred_data_path, image_name))  # Append original first then blurred
 
@@ -72,9 +71,10 @@ def get_test_data():
     value = tf.read_file(raw_data_queue[0])
     original = tf.image.decode_jpeg(value, channels=3)
     original = tf.cast(original, tf.float32)
+    cropped_original = tf.image.crop_to_bounding_box(original, 5, 5, 20, 20)
 
     test_images = tf.train.batch(
-        [original],
+        [cropped_original],
         batch_size=54,
         num_threads=1,
         capacity=300,  # The prefetch buffer for this batch train
@@ -88,7 +88,7 @@ def run_network(input_layer):
     conv1 = tf.layers.conv2d(
         inputs=input_layer,
         filters=128,
-        kernel_size=[8, 8],
+        kernel_size=[5, 5],
         padding='valid',
         activation=tf.nn.relu
     )
@@ -125,7 +125,7 @@ def run_network(input_layer):
         activation=tf.nn.relu
     )
 
-    conv11 = tf.layers.conv2d(
+    conv6 = tf.layers.conv2d(
         inputs=conv5,
         filters=128,
         kernel_size=[1, 1],
@@ -133,39 +133,58 @@ def run_network(input_layer):
         activation=tf.nn.relu
     )
 
-    conv12 = tf.layers.conv2d(
-        inputs=conv11,
-        filters=128,
-        kernel_size=[3, 3],
+    conv7 = tf.layers.conv2d(
+        inputs=conv6,
+        filters=64,
+        kernel_size=[1, 1],
         padding='valid',
         activation=tf.nn.relu
     )
 
-    conv13 = tf.layers.conv2d(
-        inputs=conv5,
-        filters=256,
-        kernel_size=[3, 3],
-        padding='valid',
-        activation=tf.nn.relu
-    )
+
+    # conv11 = tf.layers.conv2d(
+    #     inputs=conv5,
+    #     filters=128,
+    #     kernel_size=[5, 5],
+    #     padding='valid',
+    #     activation=tf.nn.relu
+    # )
+
+
+
+    # conv12 = tf.layers.conv2d(
+    #     inputs=conv5,
+    #     filters=64,
+    #     kernel_size=[3, 3],
+    #     padding='valid',
+    #     activation=tf.nn.relu
+    # )
+
+    # conv13 = tf.layers.conv2d(
+    #     inputs=conv12,
+    #     filters=256,
+    #     kernel_size=[3, 3],
+    #     padding='valid',
+    #     activation=tf.nn.relu
+    # )
 
     conv14 = tf.layers.conv2d(
-        inputs=conv13,
-        filters=64,
-        kernel_size=[5, 5],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv15 = tf.layers.conv2d(
-        inputs=conv14,
+        inputs=conv7,
         filters=3,
         kernel_size=[3, 3],
         padding='valid',
         activation=None
     )
 
-    return conv15
+    # conv15 = tf.layers.conv2d(
+    #     inputs=conv14,
+    #     filters=3,
+    #     kernel_size=[5, 5],
+    #     padding='valid',
+    #     activation=None
+    # )
+
+    return conv14
 
 
 def loss(pred, ref):
@@ -182,7 +201,7 @@ def train(total_loss, global_step, learning_rate):
 
 
 def main(argv=None):
-    learning_rate = 4e-5  # higher causes NaN issues
+    learning_rate = 1e-3  # higher causes NaN issues
     epochs = 40000
     batch_size = 54  # higher causes OOM issues on 4GB GPU
 
@@ -219,7 +238,7 @@ def main(argv=None):
         duration = time.time() - start_time
         summary_str = sess.run(summary_op)
         summary_writer.add_summary(summary_str, step)
-        if step % 500 == 0:
+        if step % 1000 == 0:
             sess.run(save_op)
             saver.save(sess, '../features', global_step=step)
         print(
