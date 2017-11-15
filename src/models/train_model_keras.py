@@ -19,8 +19,8 @@ def read_images(blurred_filename, original_filename):
 
 
 def input_data_generator(blurred_data_filenames, batch_size=20):
-    batch_blurred = np.zeros((batch_size, 60, 20, 3))
-    batch_original = np.zeros((batch_size, 60, 20, 3))
+    batch_blurred = np.zeros((batch_size, 20, 60, 3))
+    batch_original = np.zeros((batch_size, 20, 60, 3))
     while True:
         for i in range(batch_size):
             # choose random index in features
@@ -35,7 +35,7 @@ def input_data_generator(blurred_data_filenames, batch_size=20):
 
 
 def get_test_data():
-    test_data = np.zeros((100, 60, 20, 3))
+    test_data = np.zeros((100, 20, 60, 3))
 
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
     test_data_path = os.path.join(project_dir, "data", "raw", "test")
@@ -71,7 +71,7 @@ def create_model():
     model = Sequential()
     # keras.layers.Conv2D(filters, kernel_size, strides=(1, 1), padding='valid', data_format=None, dilation_rate=(1, 1), activation=None...)
     # TODO: get input shape right
-    model.add(Conv2D(128, [9, 9], padding='same', input_shape=(60, 20, 3), activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [9, 9], padding='same', input_shape=(20, 60, 3), activation='relu', data_format="channels_last"))
     model.add(Conv2D(320, [1, 1], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(320, [1, 1], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(320, [1, 1], padding='same', activation='relu', data_format="channels_last"))
@@ -110,9 +110,9 @@ def create_callbacks():
 if __name__ == "__main__":
 
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
-    raw_data_path = os.path.join(project_dir, "data", "raw", "pre-blur-cropped")
+    raw_data_path = os.path.join(project_dir, "data", "raw", "pre-blur-cropped2060")
 
-    blurred_data_path = os.path.join(project_dir, "data", "processed")
+    blurred_data_path = os.path.join(project_dir, "data", "processed2060")
     blurred_data_filenames = os.listdir(blurred_data_path)
 
     validation_split_index = int(len(blurred_data_filenames) * 0.67)
