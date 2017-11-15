@@ -42,7 +42,7 @@ def recombine_image(pieces, num_horiz, num_vert):
     full_img = Image.new("RGB", [num_horiz * 14, num_vert * 14])
     for i, piece in enumerate(pieces):
         img_tile = array_to_img(piece)
-        full_img.paste(img_tile, [i * 14, (i // num_horiz) * 14])
+        full_img.paste(img_tile, [(i * 14) % (14 * num_horiz), (i // num_horiz) * 14])
     return full_img
 
 if __name__ == "__main__":
