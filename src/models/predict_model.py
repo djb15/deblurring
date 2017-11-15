@@ -18,17 +18,15 @@ def split_image(image):
     width = image.size[0]
     height = image.size[1]
 
-    output_size = 14
+    num_horiz = (width // 60) + 1
+    num_vert = (height // 20) + 1
 
-    num_horiz = (width // output_size) + 1
-    num_vert = (height // output_size) + 1
-
-    test_x = np.zeros((num_horiz * num_vert, 20, 20, 3))
+    test_x = np.zeros((num_horiz * num_vert, 60, 20, 3))
     i = 0
 
-    for y_offset in range(0, height, output_size):
-        for x_offset in range(0, width, output_size):
-            x_bound = x_offset + 20
+    for y_offset in range(0, height, 20):
+        for x_offset in range(0, width, 60):
+            x_bound = x_offset + 60
             y_bound = y_offset + 20
 
             image_tile = image.crop([x_offset, y_offset, x_bound, y_bound])
@@ -39,10 +37,10 @@ def split_image(image):
 
 
 def recombine_image(pieces, num_horiz, num_vert):
-    full_img = Image.new("RGB", [num_horiz * 14, num_vert * 14])
+    full_img = Image.new("RGB", [num_horiz * 60, num_vert * 20])
     for i, piece in enumerate(pieces):
         img_tile = array_to_img(piece)
-        full_img.paste(img_tile, [(i * 14) % (14 * num_horiz), (i // num_horiz) * 14])
+        full_img.paste(img_tile, [(i * 60) % (60 * num_horiz), (i // num_horiz) * 20])
     return full_img
 
 if __name__ == "__main__":
