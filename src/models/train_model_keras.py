@@ -42,7 +42,15 @@ def get_test_data():
     test_filenames = os.listdir(test_data_path)
     for i, filename in enumerate(test_filenames):
         img_file = load_img(os.path.join(test_data_path, filename))
-        img_file = img_file.crop([0, 0, 20, 20])
+        width = img_file.size[0]
+        height = img_file.size[1]
+        h_offset = random.randint(0, height-20)
+        w_offset = random.randint(0, width-20)
+
+        w_bound = w_offset + 20
+        h_bound = h_offset + 20
+
+        img_file = img_file.crop([w_offset, h_offset, w_bound, h_bound])
         img_array = img_to_array(img_file) / 255
         test_data[i] = img_array
     return test_data
