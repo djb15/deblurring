@@ -44,10 +44,22 @@ def create_model():
     model = Sequential()
     # keras.layers.Conv2D(filters, kernel_size, strides=(1, 1), padding='valid', data_format=None, dilation_rate=(1, 1), activation=None...)
     # TODO: get input shape right
-    model.add(Conv2D(128, [9, 9], padding='valid', input_shape=(20, 20, 3), activation='relu', data_format="channels_last"))
-    # model.add(Conv2D(128, [9, 9], padding='valid', activation='relu', data_format="channels_last"))
-    # model.add(Conv2D(128, [9, 9], padding='valid', activation='relu', data_format="channels_last"))
-    # model.add(Conv2D(128, [9, 9], padding='valid', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [9, 9], padding='same', input_shape=(20, 20, 3), activation='relu', data_format="channels_last"))
+    model.add(Conv2D(320, [1, 1], padding='valid', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(320, [1, 1], padding='valid', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(320, [1, 1], padding='valid', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [1, 1], padding='valid', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [3, 3], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(512, [1, 1], padding='valid', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [5, 5], padding='valid', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [3, 3], padding='valid', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(256, [1, 1], padding='valid', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(64, [7, 7], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(3, [7, 7], padding='same', activation=None, data_format="channels_last"))
+
     model.compile(
             loss='mean_squared_error',
             optimizer='adam')
