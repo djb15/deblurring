@@ -10,21 +10,15 @@ import random
 
 def read_images(blurred_filename, original_filename):
     blurred_file = load_img(blurred_filename)
-    blurred = img_to_array(blurred_file)
+    blurred = img_to_array(blurred_file) / 255
 
     original_file = load_img(original_filename)
-    original = img_to_array(original_file)
+    original = img_to_array(original_file) / 255
 
     return blurred, original
 
 
-def input_data_generator(batch_size=32, directory="pre-blur-cropped"):
-    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
-    raw_data_path = os.path.join(project_dir, "data", "raw", directory)
-
-    blurred_data_path = os.path.join(project_dir, "data", "processed")
-    blurred_data_filenames = os.listdir(blurred_data_path)
-
+def input_data_generator(blurred_data_filenames, batch_size=32):
     batch_blurred = np.zeros((batch_size, 20, 20, 3))
     batch_original = np.zeros((batch_size, 14, 14, 3))
     while True:
@@ -62,7 +56,8 @@ def create_model():
 
     model.compile(
             loss='mean_squared_error',
-            optimizer='adam')
+            optimizer='adam',
+            metrics=['accuracy'])
     return model
 
 
@@ -70,33 +65,38 @@ def create_callbacks():
     callback_list = []
     # save at the end of each epoch
     filename = time.strftime("%Y%m%d-%H%M%S") + "-{epoch:02d}-{val_loss:.2f}.hdf5"
-    save_on_epoch = callbacks.ModelCheckpoint(os.path.join("models", filename))
+    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+    save_on_epoch = callbacks.ModelCheckpoint(os.path.join(project_dir, "models", filename))
+
+    tensorboard_callback = callbacks.TensorBoard(log_dir=os.path.join(project_dir, "logs"))
     callback_list.append(save_on_epoch)
+    callback_list.append(tensorboard_callback)
     return callback_list
 
 
 if __name__ == "__main__":
 
-    # # split into train and test sets
-    # train_size = int(len(dataset) * 0.67)
-    # test_size = len(dataset) - train_size
-    # train, test = dataset[0:train_size, :], dataset[train_size:len(dataset), :]
+    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+    raw_data_path = os.path.join(project_dir, "data", "raw", "pre-blur-cropped")
 
-    # look_back = 10
-    # train_x, train_y = create_dataset(train, look_back)
-    # test_x, test_y = create_dataset(test, look_back)
+    blurred_data_path = os.path.join(project_dir, "data", "processed")
+    blurred_data_filenames = os.listdir(blurred_data_path)
 
-    # # reshape input to be [samples, time steps, features]
-    # train_x = np.reshape(train_x, (train_x.shape[0], look_back, train_x.shape[2]))
-    # test_x = np.reshape(test_x, (test_x.shape[0], look_back, test_x.shape[2]))
+    validation_split_index = int(len(blurred_data_filenames) * 0.67)
 
-    # create and fit the LSTM network
+    train_filenames = blurred_data_filenames[:validation_split_index]
+    val_filenames = blurred_data_filenames[validation_split_index:]
+
+    images_per_epoch = 1000  # number of images per epoch
+    num_epochs = 1000  # number of epochs
+
     model = create_model()
     model.fit_generator(
-        input_data_generator(),
-        1,  # number of epochs
-        1000,  # number of image pairs per epoch
-        validation_data=None,  # TODO: this needs to be another generator for validation data
+        input_data_generator(train_filenames),
+        images_per_epoch,
+        num_epochs,
+        validation_data=input_data_generator(val_filenames),  # TODO: this needs to be another generator for validation data
+        validation_steps=100,
         callbacks=create_callbacks())
 
     # save model
@@ -106,16 +106,3 @@ if __name__ == "__main__":
     # # make predictions
     # train_predict = model.predict(train_x)
     # test_predict = model.predict(test_x)
-
-    # # invert scaling transformations
-    # train_predict = invert_scaling(train_predict, scaler)
-    # train_y = invert_scaling(train_y, scaler)
-    # test_predict = invert_scaling(test_predict, scaler)
-    # test_y = invert_scaling(test_y, scaler)
-    # dataset = scaler.inverse_transform(dataset)
-
-    # # calculate root mean squared error
-    # trainScore = math.sqrt(mean_squared_error(train_y, train_predict))
-    # print('Train Error: %.4f RMSE' % (trainScore))
-    # testScore = math.sqrt(mean_squared_error(test_y, test_predict))
-    # print('Test Error: %.4f RMSE' % (testScore))
