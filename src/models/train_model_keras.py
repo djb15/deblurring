@@ -34,6 +34,31 @@ def input_data_generator(blurred_data_filenames, batch_size=32):
         yield batch_blurred, batch_original
 
 
+def get_test_data():
+    test_data = np.zeros((100, 20, 20, 3))
+
+    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+    test_data_path = os.path.join(project_dir, "data", "raw", "test")
+    test_filenames = os.listdir(test_data_path)
+    for i, filename in enumerate(test_filenames):
+        img_file = load_img(os.path.join(test_data_path, filename))
+        img_file = img_file.crop([0, 0, 20, 20])
+        img_array = img_to_array(img_file) / 255
+        test_data[i] = img_array
+    return test_data
+
+
+def save_predictions(predictions):
+    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+    prediction_dir = os.path.join(project_dir, "data", "predictions")
+    time_str = time.strftime("%Y%m%d-%H%M%S")
+
+    for i, prediction in enumerate(predictions):
+        prediction = prediction * 255
+        img_file = array_to_img(prediction)
+        img_file.save(os.path.join(prediction_dir, time_str + str(i) + ".jpeg"))
+
+
 def create_model():
     model = Sequential()
     # keras.layers.Conv2D(filters, kernel_size, strides=(1, 1), padding='valid', data_format=None, dilation_rate=(1, 1), activation=None...)
@@ -87,8 +112,8 @@ if __name__ == "__main__":
     train_filenames = blurred_data_filenames[:validation_split_index]
     val_filenames = blurred_data_filenames[validation_split_index:]
 
-    images_per_epoch = 1000  # number of images per epoch
-    num_epochs = 1000  # number of epochs
+    images_per_epoch = 10  # number of images per epoch
+    num_epochs = 1  # number of epochs
 
     model = create_model()
     model.fit_generator(
@@ -100,9 +125,13 @@ if __name__ == "__main__":
         callbacks=create_callbacks())
 
     # save model
-    filename = time.strftime("%Y%m%d-%H%M%S")
-    model.save(os.path.join("models", filename + ".hdf5"))
+    filename = time.strftime("%Y%m%d-%H%M%S_final.hdf5")
+    model.save(os.path.join(project_dir, "models", filename))
 
     # # make predictions
+    test_data = get_test_data()
+    test_predictions = model.predict(test_data)
+    save_predictions(test_predictions)
+    print("Saved predictions!")
     # train_predict = model.predict(train_x)
     # test_predict = model.predict(test_x)
