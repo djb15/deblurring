@@ -2,6 +2,7 @@ import cv2
 import os
 import numpy as np
 import random
+from tqdm import tqdm
 
 
 def random_kernel_size(image_width):
@@ -95,10 +96,9 @@ if __name__ == '__main__':
 
     blurred_photos_per_original = 100
 
-    for count, photo in enumerate(raw_photos):
+    for count, photo in enumerate(tqdm(raw_photos)):
         path = os.path.join(input_img_dir, photo)
         img = cv2.imread(path)
-        print(count)
         for i in range(blurred_photos_per_original):
             motion_blurred = motion_blur(img)
             gaussian_blurred = gaussian_blur(motion_blurred)
