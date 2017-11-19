@@ -1,56 +1,43 @@
 deblurring
 ==============================
 
-Huawei image deblurring competition entry.
+Huawei image deblurring competition entry by Dirk Brink and Xav Kearney (Imperial College London EEE).
 
-Project Organization
-------------
+### Introduction
 
-    ├── LICENSE
-    ├── Makefile           <- Makefile with commands like `make data` or `make train`
-    ├── README.md          <- The top-level README for developers using this project.
-    ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
-    │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
-    │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
-    │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
-    │
-    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-    │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
-    │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
-    │
-    ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
-    │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
-    │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
-    │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
-    │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
-    │
-    └── tox.ini            <- tox file with settings for running tox; see tox.testrun.org
+The project directory structure loosely follows the [cookiecutter data science](https://drivendata.github.io/cookiecutter-data-science) format.
 
+The goal of this project is to remove motion blur from images of license plates in order to improve the accuracy of OCR.
 
---------
+### Project Summary
 
-<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
+The first step in the process was to generate training data that accurately represented the problem to be solved. Given 4000 clear images (no blur), we designed a generation script (`random_blur.py`) which takes an input image and generates 100 different copies of it, each blurred in a different direction and by a different amount. For testing we also included random Gaussian blur, and added random noise.
+
+In practice, the noise and random Gaussian blurring did not aid the training, so were removed from the process.
+
+Once 400,000 images had been generated, they are fed into the training of a Convolutional Neural Network with 15 layers. The input is the randomly blurred image, and the desired output is the un-blurred image of a license plate!
+
+A validation set of 33% of the training data was taken, and in addition the network was tested against the 100 test images supplied.
+
+After training on millions of images and creating hundreds of models with different parameters, we found what we believe to be the optimum model architecture given the data at hand.
+
+Due to the fixed size of the input to the network, each image is split up into a number of overlapping images of size 60x20 (the smallest image size in the dataset). To recombine the images, they are blended together using the Python Pillow image library. 
+
+### Usage
+
+Raw input data (un-blurred images) should be placed in `/data/raw/pre-blur/`. Test data (100 blurred images) should be placed in `/data/raw/test`.
+
+After installing the `requirements.txt` with `pip install -r requirements.txt`, run the `random_blur.py` script in `/src/data/`. This will generate 400,000 cropped image pairs - blurred and un-blurred.
+
+Once image generation is complete, train the model using `/src/models/train_model.py`. We used a batch size of 20 and found that the model converges after around 10,000 batches.
+
+Finished models will be saved in `/models/`. It's possible to use them to de-blur the images in `/data/raw/test` by running the `/src/models/predict_model.py` script with the filename of the model (without `.hdf5`) as a command line parameter.
+
+Finalised images will be saved to `/data/predictions/`.
+
+### Further Work
+
+Ideally we would have spent more time analysing the test images to ascertain exactly how to produce equivalent training data, but the sample size was so small that simple motion blur was likely optimal.
+
+With more hardware capacity, it would be interesting to see the performance improvement given more layers + training data.
+
