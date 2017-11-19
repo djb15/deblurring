@@ -21,7 +21,7 @@ def split_image(image):
     num_horiz = (width // 60) + 1
     num_vert = (height // 20) + 1
 
-    test_x = np.zeros((num_horiz * num_vert, 60, 20, 3))
+    test_x = np.zeros((num_horiz * num_vert, 20, 60, 3))
     i = 0
 
     for y_offset in range(0, height, 20):
