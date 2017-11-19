@@ -18,14 +18,8 @@ def split_image(image):
     width = image.size[0]
     height = image.size[1]
 
-<<<<<<< HEAD
-    num_horiz = (width // 60) + 1
-    num_vert = (height // 20) + 1
-
-=======
     num_horiz = width - 60
     num_vert = height - 20
->>>>>>> fd4bb18b57cb6ea4e1cdb2456bbbd5a7c8c9ac1e
     test_x = np.zeros((num_horiz * num_vert, 20, 60, 3))
     i = 0
 
