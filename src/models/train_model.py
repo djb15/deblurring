@@ -1,231 +1,151 @@
-import tensorflow as tf
-import os
 import time
+import os
+from keras.models import Sequential
+from keras.layers import Conv2D
+from keras import callbacks
+from keras.preprocessing.image import array_to_img, img_to_array, load_img
+import numpy as np
+import random
 
 
-def read_image(filename_queue):
+def read_images(blurred_filename, original_filename):
+    """Given an image filename pair, produce a pair of numpy arrays
+    """
+    blurred_file = load_img(blurred_filename)
+    blurred = img_to_array(blurred_file) / 255
 
-    value = tf.read_file(filename_queue[0])
-    original = tf.image.decode_jpeg(value, channels=3)
-    original = tf.cast(original, tf.float32)
-    cropped_original = tf.image.crop_to_bounding_box(original, 8, 8, 5, 5)
+    original_file = load_img(original_filename)
+    original = img_to_array(original_file) / 255
 
-    value = tf.read_file(filename_queue[1])
-    blurred = tf.image.decode_jpeg(value, channels=3)
-    blurred = tf.cast(blurred, tf.float32)
-    cropped_blurred = tf.image.crop_to_bounding_box(original, 0, 0, 20, 20)
-
-    return cropped_original, cropped_blurred
+    return blurred, original
 
 
-def save_image(image_data):
-    print("Saving image")
+def input_data_generator(blurred_data_filenames, batch_size=20):
+    """A generator to produce batches of input-output data pairs, given a list of filenames.
+    """
+    batch_blurred = np.zeros((batch_size, 20, 60, 3))
+    batch_original = np.zeros((batch_size, 20, 60, 3))
+    while True:
+        for i in range(batch_size):
+            # choose random index in features
+            index = random.choice(range(len(blurred_data_filenames)))
+            base_name = blurred_data_filenames[index].split('-blurred-')
+            corresponding_raw = base_name[0] + '-cropped-' + base_name[1]
+            original_filename = os.path.join(raw_data_path, corresponding_raw)
+            blurred_filename = os.path.join(blurred_data_path, blurred_data_filenames[index])  # Append original first then blurred
+            batch_blurred[i], batch_original[i] = read_images(blurred_filename, original_filename)
+
+        yield batch_blurred, batch_original
+
+
+def get_test_data():
+    test_data = np.zeros((100, 20, 60, 3))
+
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
-    filename = time.strftime("%Y%m%d-%H%M%S") + ".jpg"
-    file_path = os.path.join(project_dir, "data", "predictions", filename)
-    converted_image_data = tf.image.convert_image_dtype(image_data, dtype=tf.uint8)[0]
-    image_jpeg = tf.image.encode_jpeg(converted_image_data, format='rgb')
-    return tf.write_file(file_path, image_jpeg)
+    test_data_path = os.path.join(project_dir, "data", "raw", "test")
+    test_filenames = os.listdir(test_data_path)
+    for i, filename in enumerate(test_filenames):
+        img_file = load_img(os.path.join(test_data_path, filename))
+        width = img_file.size[0]
+        height = img_file.size[1]
+        h_offset = random.randint(0, height-20)
+        w_offset = random.randint(0, width-60)
+
+        w_bound = w_offset + 60
+        h_bound = h_offset + 20
+
+        img_file = img_file.crop([w_offset, h_offset, w_bound, h_bound])
+        img_array = img_to_array(img_file) / 255
+        test_data[i] = img_array
+    return test_data
 
 
-def input_data(batch_size, directory="pre-blur"):
+def save_predictions(predictions):
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
-    raw_data_path = os.path.join(project_dir, "data", "raw", directory)
+    prediction_dir = os.path.join(project_dir, "data", "predictions")
+    time_str = time.strftime("%Y%m%d-%H%M%S")
+
+    for i, prediction in enumerate(predictions):
+        prediction = prediction * 255
+        img_file = array_to_img(prediction)
+        img_file.save(os.path.join(prediction_dir, time_str + str(i) + ".jpeg"))
+
+
+def create_model():
+    model = Sequential()
+    # keras.layers.Conv2D(filters, kernel_size, strides=(1, 1), padding='valid', data_format=None, dilation_rate=(1, 1), activation=None...)
+    model.add(Conv2D(128, [9, 9], padding='same', input_shape=(20, 60, 3), activation='relu', data_format="channels_last"))
+    model.add(Conv2D(320, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(320, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(320, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [3, 3], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(512, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [3, 3], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(256, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(64, [7, 7], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(3, [7, 7], padding='same', activation=None, data_format="channels_last"))
+
+    model.compile(
+            loss='mean_squared_error',
+            optimizer='adam',
+            metrics=['accuracy'])
+    return model
+
+
+def create_callbacks():
+    callback_list = []
+    # save at the end of each epoch
+    filename = time.strftime("%Y%m%d-%H%M%S") + "-{epoch:02d}-{val_loss:.2f}.hdf5"
+    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+    save_on_epoch = callbacks.ModelCheckpoint(os.path.join(project_dir, "models", filename))
+
+    # enable tensorboard summary output to logs dir
+    tensorboard_callback = callbacks.TensorBoard(log_dir=os.path.join(project_dir, "logs"))
+    callback_list.append(save_on_epoch)
+    callback_list.append(tensorboard_callback)
+    return callback_list
+
+
+if __name__ == "__main__":
+
+    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+    raw_data_path = os.path.join(project_dir, "data", "raw", "pre-blur-cropped")
 
     blurred_data_path = os.path.join(project_dir, "data", "processed")
     blurred_data_filenames = os.listdir(blurred_data_path)
 
-    raw_data = []
-    blurred_data = []
+    validation_split_index = int(len(blurred_data_filenames) * 0.67)
 
-    for image_name in blurred_data_filenames:
-        corresponding_raw = image_name.split('-blurred-')[0] + '.jpg'
-        raw_data.append(os.path.join(raw_data_path, corresponding_raw))
-        blurred_data.append(os.path.join(blurred_data_path, image_name))  # Append original first then blurred
+    train_filenames = blurred_data_filenames[:validation_split_index]
+    val_filenames = blurred_data_filenames[validation_split_index:]
 
-    raw_data_queue = tf.train.slice_input_producer([raw_data, blurred_data])
+    batches_per_epoch = 3000  # number of batches per epoch
+    batch_size = 20  # number of images per batch
+    num_epochs = 1  # number of epochs
 
-    original, blurred = read_image(raw_data_queue)
+    # create model architecture
+    model = create_model()
 
-    input_images, ref_images = tf.train.batch(
-        [blurred, original],
-        batch_size=batch_size,
-        num_threads=1,
-        capacity=200,  # The prefetch buffer for this batch train
-        dynamic_pad=True
-    )
+    # fit model using generated data
+    model.fit_generator(
+        input_data_generator(train_filenames, batch_size),
+        batches_per_epoch,
+        num_epochs,
+        validation_data=input_data_generator(val_filenames, batch_size),
+        validation_steps=100,
+        callbacks=create_callbacks())
 
-    return input_images, ref_images
+    # save model
+    filename = time.strftime("%Y%m%d-%H%M%S_final.hdf5")
+    model.save(os.path.join(project_dir, "models", filename))
 
-
-def get_test_data():
-    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
-    raw_data_path = os.path.join(project_dir, "data", "raw", "validation")
-    raw_data_filenames = os.listdir(raw_data_path)
-    raw_data = []
-
-    for image_name in raw_data_filenames:
-        raw_data.append(os.path.join(raw_data_path, image_name))
-
-    raw_data_queue = tf.train.slice_input_producer([raw_data])
-
-    value = tf.read_file(raw_data_queue[0])
-    original = tf.image.decode_jpeg(value, channels=3)
-    original = tf.cast(original, tf.float32)
-
-    test_images = tf.train.batch(
-        [original],
-        batch_size=54,
-        num_threads=1,
-        capacity=300,  # The prefetch buffer for this batch train
-        dynamic_pad=True
-    )
-
-    return test_images
-
-
-def run_network(input_layer):
-    conv1 = tf.layers.conv2d(
-        inputs=input_layer,
-        filters=128,
-        kernel_size=[8, 8],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv2 = tf.layers.conv2d(
-        inputs=conv1,
-        filters=320,
-        kernel_size=[1, 1],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv3 = tf.layers.conv2d(
-        inputs=conv2,
-        filters=320,
-        kernel_size=[1, 1],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv4 = tf.layers.conv2d(
-        inputs=conv3,
-        filters=320,
-        kernel_size=[1, 1],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv5 = tf.layers.conv2d(
-        inputs=conv4,
-        filters=128,
-        kernel_size=[1, 1],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv11 = tf.layers.conv2d(
-        inputs=conv5,
-        filters=128,
-        kernel_size=[1, 1],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv12 = tf.layers.conv2d(
-        inputs=conv11,
-        filters=128,
-        kernel_size=[3, 3],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv13 = tf.layers.conv2d(
-        inputs=conv5,
-        filters=256,
-        kernel_size=[3, 3],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv14 = tf.layers.conv2d(
-        inputs=conv13,
-        filters=64,
-        kernel_size=[5, 5],
-        padding='valid',
-        activation=tf.nn.relu
-    )
-
-    conv15 = tf.layers.conv2d(
-        inputs=conv14,
-        filters=3,
-        kernel_size=[3, 3],
-        padding='valid',
-        activation=None
-    )
-
-    return conv15
-
-
-def loss(pred, ref):
-    mse = tf.losses.mean_squared_error(ref, pred)
-    tf.add_to_collection('losses', mse)
-    return tf.add_n(tf.get_collection("losses"), name="Total_loss")
-
-
-
-def train(total_loss, global_step, learning_rate):
-    tf.summary.scalar("Total_loss", total_loss)
-    return tf.train.AdamOptimizer(
-        learning_rate, epsilon=0.1).minimize(total_loss, global_step=global_step)
-
-
-def main(argv=None):
-    learning_rate = 4e-5  # higher causes NaN issues
-    epochs = 40000
-    batch_size = 54  # higher causes OOM issues on 4GB GPU
-
-
-    with tf.Graph().as_default():
-        global_step = tf.Variable(0, trainable=False)
-
-        input_images, ref_images = input_data(batch_size)
-
-        predicted_output = run_network(input_images)
-
-        loss_op = loss(predicted_output, tf.cast(ref_images, dtype=tf.float32))
-
-        train_op = train(loss_op, global_step, learning_rate)
-
-        test_data = get_test_data()
-        test_predictions = run_network(test_data)
-        save_op = save_image(test_predictions)
-
-        saver = tf.train.Saver()
-
-        summary_op = tf.summary.merge_all()
-
-        init = tf.global_variables_initializer()
-        sess = tf.Session()
-        sess.run(init)
-        tf.train.start_queue_runners(sess=sess)
-
-        summary_writer = tf.summary.FileWriter('./', graph=tf.get_default_graph())
-
-    for step in range(epochs):
-        start_time = time.time()
-        _, loss_val = sess.run([train_op, loss_op])
-        duration = time.time() - start_time
-        summary_str = sess.run(summary_op)
-        summary_writer.add_summary(summary_str, step)
-        if step % 500 == 0:
-            sess.run(save_op)
-            saver.save(sess, '../features', global_step=step)
-        print(
-            "Epoch {step}/{total_steps}\nBatch Loss: {:.4f}\nTime:{:.2f}s\n---"
-            .format(loss_val, duration, step=step, total_steps=epochs - 1))
-
-
-if __name__ == '__main__':
-    tf.app.run()
+    # make predictions (no recombination)
+    test_data = get_test_data()
+    test_predictions = model.predict(test_data)
+    save_predictions(test_predictions)
+    print("Saved predictions!")

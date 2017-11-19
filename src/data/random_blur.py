@@ -2,6 +2,7 @@ import cv2
 import os
 import numpy as np
 import random
+from tqdm import tqdm
 
 
 def random_kernel_size(image_width):
@@ -95,16 +96,30 @@ if __name__ == '__main__':
 
     blurred_photos_per_original = 100
 
-    for count, photo in enumerate(raw_photos):
+    for count, photo in enumerate(tqdm(raw_photos)):
         path = os.path.join(input_img_dir, photo)
         img = cv2.imread(path)
         for i in range(blurred_photos_per_original):
             motion_blurred = motion_blur(img)
-            gaussian_blurred = gaussian_blur(motion_blurred)
-            output_img = add_noise(gaussian_blurred)
-            # not happy with the rotation results yet
+            output_img = gaussian_blur(motion_blurred)
+            # output_img = add_noise(gaussian_blurred)
             # output_img = random_rotate(output_img)
+
+            output_height, output_width = output_img.shape[:2]
+
+            h_offset = random.randint(0, output_height-20)
+            w_offset = random.randint(0, output_width-60)
+
+            w_bound = w_offset + 60
+            h_bound = h_offset + 20
+
+            output_img = output_img[h_offset:h_bound, w_offset:w_bound]
+            cropped_img = img[h_offset:h_bound, w_offset:w_bound]
 
             output_name = os.path.splitext(photo)[0] + '-blurred-' + str(count) + str(i)
             output_filepath = os.path.join(output_dir, "{}.jpg".format(output_name))
             cv2.imwrite(output_filepath, output_img)
+
+            cropped_input_name = os.path.splitext(photo)[0] + '-cropped-' + str(count) + str(i)
+            cropped_input_filepath = os.path.join(project_dir, "data", "raw", "pre-blur-cropped", "{}.jpg".format(cropped_input_name))
+            cv2.imwrite(cropped_input_filepath, cropped_img)
