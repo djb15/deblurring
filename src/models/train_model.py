@@ -9,6 +9,8 @@ import random
 
 
 def read_images(blurred_filename, original_filename):
+    """Given an image filename pair, produce a pair of numpy arrays
+    """
     blurred_file = load_img(blurred_filename)
     blurred = img_to_array(blurred_file) / 255
 
@@ -19,6 +21,8 @@ def read_images(blurred_filename, original_filename):
 
 
 def input_data_generator(blurred_data_filenames, batch_size=20):
+    """A generator to produce batches of input-output data pairs, given a list of filenames.
+    """
     batch_blurred = np.zeros((batch_size, 20, 60, 3))
     batch_original = np.zeros((batch_size, 20, 60, 3))
     while True:
@@ -70,7 +74,6 @@ def save_predictions(predictions):
 def create_model():
     model = Sequential()
     # keras.layers.Conv2D(filters, kernel_size, strides=(1, 1), padding='valid', data_format=None, dilation_rate=(1, 1), activation=None...)
-    # TODO: get input shape right
     model.add(Conv2D(128, [9, 9], padding='same', input_shape=(20, 60, 3), activation='relu', data_format="channels_last"))
     model.add(Conv2D(320, [1, 1], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(320, [1, 1], padding='same', activation='relu', data_format="channels_last"))
@@ -101,6 +104,7 @@ def create_callbacks():
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
     save_on_epoch = callbacks.ModelCheckpoint(os.path.join(project_dir, "models", filename))
 
+    # enable tensorboard summary output to logs dir
     tensorboard_callback = callbacks.TensorBoard(log_dir=os.path.join(project_dir, "logs"))
     callback_list.append(save_on_epoch)
     callback_list.append(tensorboard_callback)
@@ -110,9 +114,9 @@ def create_callbacks():
 if __name__ == "__main__":
 
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
-    raw_data_path = os.path.join(project_dir, "data", "raw", "pre-blur-cropped2060")
+    raw_data_path = os.path.join(project_dir, "data", "raw", "pre-blur-cropped")
 
-    blurred_data_path = os.path.join(project_dir, "data", "processed2060")
+    blurred_data_path = os.path.join(project_dir, "data", "processed")
     blurred_data_filenames = os.listdir(blurred_data_path)
 
     validation_split_index = int(len(blurred_data_filenames) * 0.67)
@@ -120,15 +124,19 @@ if __name__ == "__main__":
     train_filenames = blurred_data_filenames[:validation_split_index]
     val_filenames = blurred_data_filenames[validation_split_index:]
 
-    images_per_epoch = 3000  # number of images per epoch
-    num_epochs = 5  # number of epochs
+    batches_per_epoch = 3000  # number of batches per epoch
+    batch_size = 20  # number of images per batch
+    num_epochs = 1  # number of epochs
 
+    # create model architecture
     model = create_model()
+
+    # fit model using generated data
     model.fit_generator(
-        input_data_generator(train_filenames),
-        images_per_epoch,
+        input_data_generator(train_filenames, batch_size),
+        batches_per_epoch,
         num_epochs,
-        validation_data=input_data_generator(val_filenames),  # TODO: this needs to be another generator for validation data
+        validation_data=input_data_generator(val_filenames, batch_size),
         validation_steps=100,
         callbacks=create_callbacks())
 
@@ -136,10 +144,8 @@ if __name__ == "__main__":
     filename = time.strftime("%Y%m%d-%H%M%S_final.hdf5")
     model.save(os.path.join(project_dir, "models", filename))
 
-    # # make predictions
+    # make predictions (no recombination)
     test_data = get_test_data()
     test_predictions = model.predict(test_data)
     save_predictions(test_predictions)
     print("Saved predictions!")
-    # train_predict = model.predict(train_x)
-    # test_predict = model.predict(test_x)
