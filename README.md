@@ -25,7 +25,11 @@ Due to the fixed size of the input to the network, each image is split up into a
 
 ### Usage
 
+#### NOTE - Images are cropped to 40x20px for training.  We pushed this close to the limit of the smallest image received for performance benefits. However, this means the script will crash if trying to run on images smaller than this.
+
 Raw input data (un-blurred images) should be placed in `/data/raw/pre-blur/`. Test data (100 blurred images) should be placed in `/data/raw/test`.
+
+IMPORTANT - Please make sure to remove the `.gitkeep` files from all sub-directories in the `data` directory before running any scripts.  They are there to make folder structure apparent but will crash the scripts.
 
 After installing the `requirements.txt` with `pip install -r requirements.txt`, run the `random_blur.py` script in `/src/data/`. This will generate 400,000 cropped image pairs - blurred and un-blurred.
 
