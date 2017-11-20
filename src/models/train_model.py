@@ -20,7 +20,7 @@ def read_images(blurred_filename, original_filename):
     return blurred, original
 
 
-def input_data_generator(blurred_data_filenames, batch_size=20):
+def input_data_generator(blurred_data_filenames, batch_size):
     """A generator to produce batches of input-output data pairs, given a list of filenames.
     """
     batch_blurred = np.zeros((batch_size, 20, 40, 3))
