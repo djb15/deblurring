@@ -3,7 +3,7 @@ import sys
 import numpy as np
 from keras.preprocessing.image import array_to_img, img_to_array, load_img
 from PIL import Image
-from train_model_keras import create_model
+from train_model import create_model
 
 
 def load_model(model_name):

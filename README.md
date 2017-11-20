@@ -36,7 +36,7 @@ After installing the `requirements.txt` with `pip install -r requirements.txt`, 
 Once image generation is complete, train the model using `/src/models/train_model.py`. We used a batch size of 20 and found that the model converges after around 10,000 batches.
 
 Finished models will be saved in `/models/`. It's possible to use them to de-blur the images in `/data/raw/test` by running the `/src/models/predict_model.py` script with the filename of the model (without `.hdf5`) as a command line parameter.
-e.g. `python predict_model.py 23423235`
+e.g. `python predict_model.py 20171120-210447_final`
 
 Finalised images will be saved to `/data/predictions/`.
 
