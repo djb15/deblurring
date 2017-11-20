@@ -2,7 +2,7 @@ import time
 import os
 from keras.models import Sequential
 from keras.layers import Conv2D
-from keras import callbacks
+from keras import callbacks, optimizers
 from keras.preprocessing.image import array_to_img, img_to_array, load_img
 import numpy as np
 import random
@@ -19,8 +19,8 @@ def read_images(blurred_filename, original_filename):
 
 
 def input_data_generator(blurred_data_filenames, batch_size=20):
-    batch_blurred = np.zeros((batch_size, 20, 60, 3))
-    batch_original = np.zeros((batch_size, 20, 60, 3))
+    batch_blurred = np.zeros((batch_size, 20, 40, 3))
+    batch_original = np.zeros((batch_size, 20, 40, 3))
     while True:
         for i in range(batch_size):
             # choose random index in features
@@ -35,7 +35,7 @@ def input_data_generator(blurred_data_filenames, batch_size=20):
 
 
 def get_test_data():
-    test_data = np.zeros((100, 20, 60, 3))
+    test_data = np.zeros((100, 20, 40, 3))
 
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
     test_data_path = os.path.join(project_dir, "data", "raw", "test")
@@ -45,9 +45,9 @@ def get_test_data():
         width = img_file.size[0]
         height = img_file.size[1]
         h_offset = random.randint(0, height-20)
-        w_offset = random.randint(0, width-60)
+        w_offset = random.randint(0, width-40)
 
-        w_bound = w_offset + 60
+        w_bound = w_offset + 40
         h_bound = h_offset + 20
 
         img_file = img_file.crop([w_offset, h_offset, w_bound, h_bound])
@@ -71,21 +71,22 @@ def create_model():
     model = Sequential()
     # keras.layers.Conv2D(filters, kernel_size, strides=(1, 1), padding='valid', data_format=None, dilation_rate=(1, 1), activation=None...)
     # TODO: get input shape right
-    model.add(Conv2D(128, [9, 9], padding='same', input_shape=(20, 60, 3), activation='relu', data_format="channels_last"))
-    model.add(Conv2D(320, [1, 1], padding='same', activation='relu', data_format="channels_last"))
-    model.add(Conv2D(320, [1, 1], padding='same', activation='relu', data_format="channels_last"))
-    model.add(Conv2D(320, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [10, 10], padding='same', input_shape=(20, 40, 3), activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [1, 1], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(128, [1, 1], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(128, [3, 3], padding='same', activation='relu', data_format="channels_last"))
-    model.add(Conv2D(512, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [1, 1], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(128, [3, 3], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
-    model.add(Conv2D(256, [1, 1], padding='same', activation='relu', data_format="channels_last"))
-    model.add(Conv2D(64, [7, 7], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [7, 7], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(3, [7, 7], padding='same', activation=None, data_format="channels_last"))
+
+    adam = optimizers.Adam(lr=0.00001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 
     model.compile(
             loss='mean_squared_error',
@@ -110,9 +111,9 @@ def create_callbacks():
 if __name__ == "__main__":
 
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
-    raw_data_path = os.path.join(project_dir, "data", "raw", "pre-blur-cropped2060")
+    raw_data_path = os.path.join(project_dir, "data", "raw", "pre-blur-cropped2040")
 
-    blurred_data_path = os.path.join(project_dir, "data", "processed2060")
+    blurred_data_path = os.path.join(project_dir, "data", "processed2040")
     blurred_data_filenames = os.listdir(blurred_data_path)
 
     validation_split_index = int(len(blurred_data_filenames) * 0.67)
@@ -120,8 +121,8 @@ if __name__ == "__main__":
     train_filenames = blurred_data_filenames[:validation_split_index]
     val_filenames = blurred_data_filenames[validation_split_index:]
 
-    images_per_epoch = 3000  # number of images per epoch
-    num_epochs = 5  # number of epochs
+    images_per_epoch = 3350  # number of images per epoch
+    num_epochs = 30  # number of epochs
 
     model = create_model()
     model.fit_generator(

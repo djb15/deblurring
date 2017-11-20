@@ -90,7 +90,7 @@ def random_rotate(img):
 if __name__ == '__main__':
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
     input_img_dir = os.path.join(project_dir, "data", "raw", "pre-blur")
-    output_dir = os.path.join(project_dir, "data", "processed2060")
+    output_dir = os.path.join(project_dir, "data", "processed2040")
 
     raw_photos = os.listdir(input_img_dir)
 
@@ -101,17 +101,17 @@ if __name__ == '__main__':
         img = cv2.imread(path)
         for i in range(blurred_photos_per_original):
             motion_blurred = motion_blur(img)
-            gaussian_blurred = gaussian_blur(motion_blurred)
-            output_img = add_noise(gaussian_blurred)
+            #gaussian_blurred = gaussian_blur(motion_blurred)
+            #output_img = add_noise(gaussian_blurred)
             # not happy with the rotation results yet
             # output_img = random_rotate(output_img)
-
+            output_img = motion_blurred
             output_height, output_width = output_img.shape[:2]
 
             h_offset = random.randint(0, output_height-20)
-            w_offset = random.randint(0, output_width-60)
+            w_offset = random.randint(0, output_width-40)
 
-            w_bound = w_offset + 60
+            w_bound = w_offset + 40
             h_bound = h_offset + 20
 
             output_img = output_img[h_offset:h_bound, w_offset:w_bound]
@@ -122,5 +122,5 @@ if __name__ == '__main__':
             cv2.imwrite(output_filepath, output_img)
 
             cropped_input_name = os.path.splitext(photo)[0] + '-cropped-' + str(count) + str(i)
-            cropped_input_filepath = os.path.join(project_dir, "data", "raw", "pre-blur-cropped2060", "{}.jpg".format(cropped_input_name))
+            cropped_input_filepath = os.path.join(project_dir, "data", "raw", "pre-blur-cropped2040", "{}.jpg".format(cropped_input_name))
             cv2.imwrite(cropped_input_filepath, cropped_img)
