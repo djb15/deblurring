@@ -108,9 +108,9 @@ if __name__ == '__main__':
             output_height, output_width = output_img.shape[:2]
 
             h_offset = random.randint(0, output_height-20)
-            w_offset = random.randint(0, output_width-60)
+            w_offset = random.randint(0, output_width-40)
 
-            w_bound = w_offset + 60
+            w_bound = w_offset + 40
             h_bound = h_offset + 20
 
             output_img = output_img[h_offset:h_bound, w_offset:w_bound]
