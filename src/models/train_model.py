@@ -23,8 +23,8 @@ def read_images(blurred_filename, original_filename):
 def input_data_generator(blurred_data_filenames, batch_size=20):
     """A generator to produce batches of input-output data pairs, given a list of filenames.
     """
-    batch_blurred = np.zeros((batch_size, 20, 60, 3))
-    batch_original = np.zeros((batch_size, 20, 60, 3))
+    batch_blurred = np.zeros((batch_size, 20, 40, 3))
+    batch_original = np.zeros((batch_size, 20, 40, 3))
     while True:
         for i in range(batch_size):
             # choose random index in features
@@ -39,7 +39,7 @@ def input_data_generator(blurred_data_filenames, batch_size=20):
 
 
 def get_test_data():
-    test_data = np.zeros((100, 20, 60, 3))
+    test_data = np.zeros((100, 20, 40, 3))
 
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
     test_data_path = os.path.join(project_dir, "data", "raw", "test")
@@ -49,9 +49,9 @@ def get_test_data():
         width = img_file.size[0]
         height = img_file.size[1]
         h_offset = random.randint(0, height-20)
-        w_offset = random.randint(0, width-60)
+        w_offset = random.randint(0, width-40)
 
-        w_bound = w_offset + 60
+        w_bound = w_offset + 40
         h_bound = h_offset + 20
 
         img_file = img_file.crop([w_offset, h_offset, w_bound, h_bound])
@@ -74,20 +74,20 @@ def save_predictions(predictions):
 def create_model():
     model = Sequential()
     # keras.layers.Conv2D(filters, kernel_size, strides=(1, 1), padding='valid', data_format=None, dilation_rate=(1, 1), activation=None...)
-    model.add(Conv2D(128, [9, 9], padding='same', input_shape=(20, 60, 3), activation='relu', data_format="channels_last"))
-    model.add(Conv2D(320, [1, 1], padding='same', activation='relu', data_format="channels_last"))
-    model.add(Conv2D(320, [1, 1], padding='same', activation='relu', data_format="channels_last"))
-    model.add(Conv2D(320, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [10, 10], padding='same', input_shape=(20, 40, 3), activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [1, 1], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(128, [1, 1], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(128, [3, 3], padding='same', activation='relu', data_format="channels_last"))
-    model.add(Conv2D(512, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [1, 1], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(128, [3, 3], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(128, [5, 5], padding='same', activation='relu', data_format="channels_last"))
-    model.add(Conv2D(256, [1, 1], padding='same', activation='relu', data_format="channels_last"))
-    model.add(Conv2D(64, [7, 7], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [1, 1], padding='same', activation='relu', data_format="channels_last"))
+    model.add(Conv2D(128, [7, 7], padding='same', activation='relu', data_format="channels_last"))
     model.add(Conv2D(3, [7, 7], padding='same', activation=None, data_format="channels_last"))
 
     model.compile(
@@ -124,9 +124,9 @@ if __name__ == "__main__":
     train_filenames = blurred_data_filenames[:validation_split_index]
     val_filenames = blurred_data_filenames[validation_split_index:]
 
-    batches_per_epoch = 3000  # number of batches per epoch
+    batches_per_epoch = 3350  # number of batches per epoch
     batch_size = 20  # number of images per batch
-    num_epochs = 1  # number of epochs
+    num_epochs = 3  # number of epochs
 
     # create model architecture
     model = create_model()
