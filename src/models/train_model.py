@@ -38,39 +38,6 @@ def input_data_generator(blurred_data_filenames, batch_size=20):
         yield batch_blurred, batch_original
 
 
-def get_test_data():
-    test_data = np.zeros((100, 20, 40, 3))
-
-    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
-    test_data_path = os.path.join(project_dir, "data", "raw", "test")
-    test_filenames = os.listdir(test_data_path)
-    for i, filename in enumerate(test_filenames):
-        img_file = load_img(os.path.join(test_data_path, filename))
-        width = img_file.size[0]
-        height = img_file.size[1]
-        h_offset = random.randint(0, height-20)
-        w_offset = random.randint(0, width-40)
-
-        w_bound = w_offset + 40
-        h_bound = h_offset + 20
-
-        img_file = img_file.crop([w_offset, h_offset, w_bound, h_bound])
-        img_array = img_to_array(img_file) / 255
-        test_data[i] = img_array
-    return test_data
-
-
-def save_predictions(predictions):
-    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
-    prediction_dir = os.path.join(project_dir, "data", "predictions")
-    time_str = time.strftime("%Y%m%d-%H%M%S")
-
-    for i, prediction in enumerate(predictions):
-        prediction = prediction * 255
-        img_file = array_to_img(prediction)
-        img_file.save(os.path.join(prediction_dir, time_str + str(i) + ".jpeg"))
-
-
 def create_model():
     model = Sequential()
     # keras.layers.Conv2D(filters, kernel_size, strides=(1, 1), padding='valid', data_format=None, dilation_rate=(1, 1), activation=None...)
@@ -143,9 +110,3 @@ if __name__ == "__main__":
     # save model
     filename = time.strftime("%Y%m%d-%H%M%S_final.hdf5")
     model.save(os.path.join(project_dir, "models", filename))
-
-    # make predictions (no recombination)
-    test_data = get_test_data()
-    test_predictions = model.predict(test_data)
-    save_predictions(test_predictions)
-    print("Saved predictions!")

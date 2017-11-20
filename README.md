@@ -21,7 +21,7 @@ A validation set of 33% of the training data was taken, and in addition the netw
 
 After training on millions of images and creating hundreds of models with different parameters, we found what we believe to be the optimum model architecture given the data at hand.
 
-Due to the fixed size of the input to the network, each image is split up into a number of overlapping images of size 60x20 (the smallest image size in the dataset). To recombine the images, they are blended together using the Python Pillow image library. 
+Due to the fixed size of the input to the network, each image is split up into a number of overlapping images of size 60x20 (the smallest image size in the dataset). To recombine the images, they are blended together using the Python Pillow image library.
 
 ### Usage
 
@@ -32,6 +32,7 @@ After installing the `requirements.txt` with `pip install -r requirements.txt`, 
 Once image generation is complete, train the model using `/src/models/train_model.py`. We used a batch size of 20 and found that the model converges after around 10,000 batches.
 
 Finished models will be saved in `/models/`. It's possible to use them to de-blur the images in `/data/raw/test` by running the `/src/models/predict_model.py` script with the filename of the model (without `.hdf5`) as a command line parameter.
+e.g. `python predict_model.py 23423235`
 
 Finalised images will be saved to `/data/predictions/`.
 
@@ -40,4 +41,3 @@ Finalised images will be saved to `/data/predictions/`.
 Ideally we would have spent more time analysing the test images to ascertain exactly how to produce equivalent training data, but the sample size was so small that simple motion blur was likely optimal.
 
 With more hardware capacity, it would be interesting to see the performance improvement given more layers + training data.
-
