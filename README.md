@@ -1,7 +1,7 @@
 deblurring
 ==============================
 
-Huawei image deblurring competition entry by Dirk Brink and Xav Kearney (Imperial College London EEE).
+Huawei image deblurring competition entry by Dirk Brink and Xav Kearney (https://github.com/XavKearney) - Imperial College London EEE.
 
 ### Introduction
 
