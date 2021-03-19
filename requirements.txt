@@ -16,7 +16,7 @@ html5lib==0.9999999
 idna==2.6
 imagesize==0.7.1
 imutils==0.4.3
-Jinja2==2.9.6
+Jinja2==2.11.3
 jmespath==0.9.3
 Keras==2.1.1
 Markdown==2.6.9
