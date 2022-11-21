@@ -43,7 +43,7 @@ six==1.11.0
 snowballstemmer==1.2.1
 Sphinx==1.6.4
 sphinxcontrib-websupport==1.0.1
-tensorflow-gpu==1.4.0
+tensorflow-gpu==2.9.3
 tensorflow-tensorboard==0.4.0rc2
 tqdm==4.19.4
 urllib3==1.22
